@@ -1,0 +1,40 @@
+{
+  "name": "FITMANYACTS - Hybrid Training",
+  "short_name": "FITMANYACTS",
+  "description": "Sistema de gestión de clases para FITMANYACTS Hybrid Training",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#c1fe40",
+  "icons": [
+    {
+      "src": "logo-portada.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo-portada.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["fitness", "health"],
+  "shortcuts": [
+    {
+      "name": "Ver Clases",
+      "short_name": "Clases",
+      "description": "Ver clases disponibles",
+      "url": "/index.html?section=classes"
+    },
+    {
+      "name": "Mini Juegos",
+      "short_name": "Juegos",
+      "description": "Mini juegos",
+      "url": "/index.html?section=games"
+    }
+  ]
+}

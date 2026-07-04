@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Setup FITMANYACTS</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        h1 { color: #c1fe40; }
+        p { color: #aaa; text-align: center; max-width: 450px; }
+        button { background: #c1fe40; color: #000; border: none; padding: 16px 32px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 8px; }
+        button:disabled { background: #555; color: #999; cursor: not-allowed; }
+        #log { margin-top: 20px; font-size: 14px; max-width: 500px; width: 100%; }
+        #log p { text-align: left; margin: 4px 0; }
+        .ok  { color: #c1fe40; }
+        .err { color: #ff5252; }
+        .inf { color: #aaa; }
+    </style>
+</head>
+<body>
+    <h1>Setup FITMANYACTS</h1>
+    <p>Crea los documentos de usuario en Firestore.<br>Úsalo <strong>UNA SOLA VEZ</strong> y luego elimínalo del proyecto.</p>
+    <button id="btn" onclick="crearUsuarios()">Crear usuarios en Firestore</button>
+    <div id="log"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFQ84x5uYLCqejKNrG4lPj6Az2mrgTb24",
+            authDomain: "fit-manyacts.firebaseapp.com",
+            projectId: "fit-manyacts",
+            storageBucket: "fit-manyacts.firebasestorage.app",
+            messagingSenderId: "453534938293",
+            appId: "1:453534938293:web:922cdd392dbdcc571e3afc"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db  = getFirestore(app);
+
+        function hoy() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+        function sumarMes(fecha) {
+            const [y,m,d] = fecha.split('-').map(Number);
+            const f = new Date(y, m-1, d);
+            f.setMonth(f.getMonth()+1);
+            return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`;
+        }
+
+        // Estos emails deben coincidir EXACTAMENTE con los de Firebase Authentication
+        const usuarios = [
+            {
+                nombre: 'Rafa',
+                email: 'rafa@fitmanyacts.com',
+                rol: 'dueño',
+                estado: 'activo',
+                fecha_registro: hoy()
+            },
+            {
+                nombre: 'Andrés',
+                email: 'andres@fitmanyacts.com',
+                rol: 'entrenador',
+                estado: 'activo',
+                fecha_registro: hoy()
+            },
+            {
+                nombre: 'Saulo Isaac Gallardo Ramírez',
+                email: 'saulo.gallardo38@gmail.com',
+                rol: 'usuario',
+                estado: 'activo',
+                fecha_registro: hoy(),
+                membresia_vence: sumarMes(hoy())
+            }
+        ];
+
+        const log = document.getElementById('log');
+        function logMsg(msg, tipo = 'inf') {
+            log.innerHTML += `<p class="${tipo}">${msg}</p>`;
+        }
+
+        window.crearUsuarios = async function () {
+            const btn = document.getElementById('btn');
+            btn.disabled = true;
+            btn.textContent = 'Creando...';
+
+            for (const u of usuarios) {
+                logMsg(`⏳ Procesando: ${u.nombre} (${u.email})...`);
+                try {
+                    // Verificar que no exista ya
+                    const q = query(collection(db, 'usuarios'), where('email', '==', u.email));
+                    const snap = await getDocs(q);
+                    if (!snap.empty) {
+                        logMsg(`⚠️ Ya existe en Firestore: ${u.email}`, 'inf');
+                        continue;
+                    }
+                    await addDoc(collection(db, 'usuarios'), u);
+                    logMsg(`✅ Creado: ${u.nombre} (${u.rol})`, 'ok');
+                } catch (err) {
+                    logMsg(`❌ Error (${u.email}): ${err.message}`, 'err');
+                }
+            }
+
+            logMsg('', 'inf');
+            logMsg('🎉 <strong>¡Listo! Elimina este archivo del proyecto.</strong>', 'ok');
+            btn.textContent = '¡Completado!';
+        };
+    </script>
+</body>
+</html>

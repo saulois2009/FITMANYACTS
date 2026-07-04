@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="description" content="FITMANYACTS - Sistema de Gestión de Clases">
+    <title>FITMANYACTS</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23000000' width='180' height='180'/><text x='50%' y='50%' font-size='80' font-weight='bold' fill='%23c1fe40' text-anchor='middle' dy='.3em'>FM</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- PANTALLA DE CARGA (splash screen) -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <img src="IMG_7396.jpeg" alt="FITMANYACTS" class="splash-logo">
+            <h1 class="splash-title">FITMANYACTS</h1>
+            <p class="splash-subtitle">BY: SACHKI</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- PANTALLA DE LOGIN -->
+        <div id="loginScreen" class="screen active">
+            <div class="login-container">
+                <div class="logo">
+                    <img src="IMG_7396.jpeg" alt="FITMANYACTS Logo" class="logo-image">
+                </div>
+                <h1>FITMANYACTS</h1>
+                <p class="subtitle">Hybrid Training</p>
+                
+                <form id="loginForm" class="form">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" placeholder="ejemplo@fitmanyacts.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="loginPassword" placeholder="••••••" required>
+                            <button type="button" class="toggle-password-btn" data-target="loginPassword" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                </form>
+                
+                <p class="toggle-text">¿No tiene cuenta? <button type="button" id="toggleRegister" class="link-btn">Crear cuenta</button></p>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE REGISTRO -->
+        <div id="registerScreen" class="screen">
+            <div class="register-container">
+                <h1>Crear Cuenta</h1>
+                <p class="subtitle">FITMANYACTS</p>
+                
+                <form id="registerForm" class="form">
+                    <div class="form-group">
+                        <label for="registerName">Nombre Completo</label>
+                        <input type="text" id="registerName" placeholder="Tu nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" placeholder="ejemplo@fitmanyacts.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="registerPassword">Contraseña</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
+                            <button type="button" class="toggle-password-btn" data-target="registerPassword" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registerPasswordConfirm">Confirmar Contraseña</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="registerPasswordConfirm" placeholder="Repite la contraseña" required>
+                            <button type="button" class="toggle-password-btn" data-target="registerPasswordConfirm" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="registerRole" value="usuario">
+                    
+                    <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+                </form>
+                
+                <p class="toggle-text"><button type="button" id="toggleLogin" class="link-btn">Volver al login</button></p>
+            </div>
+        </div>
+
+        <!-- PANTALLA PRINCIPAL (DASHBOARD) -->
+        <div id="dashboardScreen" class="screen">
+            <header class="header">
+                <img src="logo-fitmanyacts-horizontal.png" alt="FITMANYACTS" class="header-logo" style="height:44px;width:auto;max-width:200px;object-fit:contain;">
+                <button id="menuBtn" class="menu-btn">☰</button>
+            </header>
+
+            <div class="menu-overlay" id="menuOverlay">
+                <nav class="menu">
+                    <button class="menu-close" id="menuCloseBtn">✕</button>
+                    <a href="#" data-screen="profile" class="menu-item">Mi Perfil</a>
+                    <a href="#" data-screen="classes" class="menu-item">Clases</a>
+                    <a href="#" data-screen="events" class="menu-item">Eventos</a>
+                    <a href="#" data-screen="members" class="menu-item" id="membersMenuItem" style="display: none;">Miembros</a>
+                    <a href="#" data-screen="coaches" class="menu-item" id="coachesMenuItem" style="display: none;">Coaches</a>
+                    <a href="#" data-screen="challenge" class="menu-item" id="challengeMenuItem" style="display: none;">Reto 90 Días</a>
+                    <hr>
+                    <button id="logoutBtn" class="menu-item logout">Cerrar Sesión</button>
+                </nav>
+            </div>
+
+            <main class="content">
+                <!-- SECCIÓN: PERFIL -->
+                <section id="profileSection" class="section active">
+                    <h2>Mi Perfil</h2>
+                    <div class="card">
+                        <p><strong>Nombre:</strong> <span id="profileName">-</span></p>
+                        <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
+                        <p><strong>Tipo:</strong> <span id="profileRole">-</span></p>
+                        <p id="profileAgeRow"><strong>Edad:</strong> <span id="profileAge">-</span></p>
+                        <p id="profileMembershipRow"><strong>Membresía:</strong> <span id="profileMembership">Vigente</span> <span id="profileMembershipVence" style="color: var(--text-light); font-size: 13px;"></span></p>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: CLASES -->
+                <section id="classesSection" class="section">
+                    <h2>Clases Disponibles</h2>
+                    <div class="day-selector-wrapper">
+                        <div id="classesDaySelector" class="day-selector">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                    <div id="classesList" class="classes-grid">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: EVENTOS -->
+                <section id="eventsSection" class="section">
+                    <h2>Eventos</h2>
+                    <button id="addEventBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 16px; display: none;">+ Crear Evento</button>
+                    <div id="eventsList" class="events-list">
+                        <p class="empty-state">No hay eventos programados</p>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: JUEGOS -->
+                <section id="gamesSection" class="section">
+                    <h2>Mini Juegos</h2>
+                    <div style="text-align: center; padding: 40px 20px; background-color: var(--card-bg); border-radius: 12px; border: 1px dashed var(--primary-color); margin-bottom: 20px;">
+                        <p style="font-size: 28px; font-weight: 800; color: var(--primary-color); letter-spacing: 3px; margin-bottom: 8px;">PRÓXIMAMENTE</p>
+                        <p style="font-size: 14px; color: var(--text-light);">Estamos preparando algo divertido para ti</p>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: RETO 90 DÍAS (coaches y dueño) -->
+                <section id="challengeSection" class="section">
+                    <h2>Reto 90 Días</h2>
+
+                    <!-- Botón de análisis IA -->
+                    <button id="analyzeBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 16px;">
+                        Analizar ganadores con IA
+                    </button>
+
+                    <!-- Resultado del análisis -->
+                    <div id="aiResultContainer" style="display: none;" class="card">
+                        <div id="aiResultContent"></div>
+                    </div>
+
+                    <!-- Agregar miembro al reto -->
+                    <div id="challengeAddArea" style="margin-bottom: 16px;">
+                        <input type="text" id="challengeSearchInput" class="search-input" placeholder="Buscar miembro para agregar al reto...">
+                        <div id="challengeAddList" class="roster-list" style="max-height: 160px;">
+                        </div>
+                    </div>
+
+                    <!-- Lista de participantes -->
+                    <div id="challengeParticipantsList">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: MIEMBROS (coaches y dueño) -->
+                <section id="membersSection" class="section">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <h2 style="margin:0;">Miembros</h2>
+                        <button id="agregarMiembroBtn" class="btn btn-primary" style="padding:8px 14px;font-size:13px;">+ Agregar</button>
+                    </div>
+                    <input type="text" id="membersSearchInput" class="search-input" placeholder="Buscar miembro...">
+                    <div id="membersList">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: COACHES (solo dueño) -->
+                <section id="coachesSection" class="section">
+                    <h2>Coaches</h2>
+
+                    <div class="card">
+                        <form id="addCoachForm" class="form" style="max-width: none; padding: 0; box-shadow: none;">
+                            <div class="form-group">
+                                <label for="coachName">Nombre Completo</label>
+                                <input type="text" id="coachName" placeholder="Nombre del coach" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="coachEmail">Email</label>
+                                <input type="email" id="coachEmail" placeholder="coach@fitmanyacts.com" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="coachPassword">Contraseña</label>
+                                <div class="password-wrapper">
+                                    <input type="password" id="coachPassword" placeholder="Mínimo 6 caracteres" required>
+                                    <button type="button" class="toggle-password-btn" data-target="coachPassword" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Agregar Coach</button>
+                        </form>
+                    </div>
+
+                    <input type="text" id="coachesSearchInput" class="search-input" placeholder="Buscar coach...">
+                    <div id="coachesList">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- PANTALLA DEL JUEGO -->
+        <div id="gameScreen" class="screen">
+            <div class="game-container">
+                <button id="backGameBtn" class="back-btn">← Volver</button>
+                <h2>Flappy Bird</h2>
+                <canvas id="gameCanvas" width="400" height="600"></canvas>
+                <div id="gameScore" class="game-score">Puntos: 0</div>
+                <button id="restartGameBtn" class="btn btn-primary">Reiniciar Juego</button>
+            </div>
+        </div>
+
+        <!-- MODAL: LISTA DE ANOTADOS / AGENDAR MIEMBRO (coaches y dueño) -->
+        <div id="rosterModalOverlay" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="rosterModalTitle">Clase</h3>
+                    <button id="rosterModalCloseBtn" class="modal-close-btn">✕</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="modal-section">
+                        <p class="modal-section-label">Anotados (<span id="rosterCount">0</span>/20)</p>
+                        <input type="text" id="rosterSearchInput" class="search-input" placeholder="Buscar miembro anotado...">
+                        <div id="rosterList" class="roster-list">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <p class="modal-section-label">Agendar miembro</p>
+                        <input type="text" id="rosterAddSearchInput" class="search-input" placeholder="Buscar miembro para agendar...">
+                        <div id="rosterAddList" class="roster-list">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: CREAR / EDITAR EVENTO (coaches y dueño) -->
+        <div id="eventModalOverlay" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="eventModalTitle">Crear Evento</h3>
+                    <button id="eventModalCloseBtn" class="modal-close-btn">✕</button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="eventForm" class="form" style="max-width: none; padding: 0; box-shadow: none;">
+                        <div class="form-group">
+                            <label for="eventName">Nombre del evento</label>
+                            <input type="text" id="eventName" placeholder="Ej. Fit Camp - Playa Progreso">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="eventDate">Fecha</label>
+                            <input type="date" id="eventDate">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="eventTime">Hora</label>
+                            <input type="time" id="eventTime">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="eventLocation">Ubicación</label>
+                            <input type="text" id="eventLocation" placeholder="Ej. Playa Progreso, Yucatán">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="eventCost">Costo adicional ($)</label>
+                            <input type="number" id="eventCost" placeholder="0" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="eventBreakfast">¿Incluye desayuno y bebida?</label>
+                            <select id="eventBreakfast">
+                                <option value="no">No</option>
+                                <option value="si">Sí</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="eventMapsLink">Link de Google Maps</label>
+                            <input type="text" id="eventMapsLink" placeholder="https://maps.google.com/?q=...">
+                        </div>
+
+                        <input type="hidden" id="eventEditId" value="">
+
+                        <button type="submit" class="btn btn-primary">Guardar Evento</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: CONFIRMAR CAMPOS VACÍOS AL CREAR/EDITAR EVENTO -->
+        <div id="emptyFieldsModalOverlay" class="modal-overlay">
+            <div class="modal" style="max-width: 360px;">
+                <div class="modal-header">
+                    <h3>Campos en blanco</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="emptyFieldsMessage" style="margin-bottom: 16px; font-size: 14px; color: var(--text-dark);"></p>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="emptyFieldsContinueBtn" class="btn btn-primary" style="flex: 1;">Sí, continuar</button>
+                        <button id="emptyFieldsEditBtn" class="btn" style="flex: 1; background-color: var(--border-color); color: var(--text-dark);">No, editar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: MEDIDAS DEL RETO 90 DÍAS -->
+        <div id="challengeModalOverlay" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 id="challengeModalTitle">Medidas</h3>
+                    <button id="challengeModalCloseBtn" class="modal-close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Tabs: ver perfil / editar medidas iniciales / editar medidas finales -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <button class="challenge-tab-btn active" data-tab="info">Perfil</button>
+                        <button class="challenge-tab-btn" data-tab="inicial">Medidas Iniciales</button>
+                        <button class="challenge-tab-btn" data-tab="final">Medidas Finales</button>
+                    </div>
+
+                    <!-- TAB: INFO / PROGRESO -->
+                    <div id="challengeTabInfo" class="challenge-tab active">
+                        <div id="challengeParticipantInfo">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- TAB: MEDIDAS INICIALES -->
+                    <div id="challengeTabInicial" class="challenge-tab">
+                        <form id="challengeFormInicial">
+                            <input type="hidden" id="challengeFormType" value="inicial">
+                            <div class="form-group"><label>Edad</label><input type="number" id="cf_edad" placeholder="años" min="1"></div>
+                            <div class="form-group"><label>Peso (kg)</label><input type="number" id="cf_peso" placeholder="ej. 75.5" step="0.1"></div>
+                            <div class="form-group"><label>Estatura (cm)</label><input type="number" id="cf_estatura" placeholder="ej. 175" step="0.1"></div>
+                            <div class="form-group"><label>Brazos (cm)</label><input type="number" id="cf_brazos" placeholder="ej. 35" step="0.1"></div>
+                            <div class="form-group"><label>Cintura (cm)</label><input type="number" id="cf_cintura" placeholder="ej. 80" step="0.1"></div>
+                            <div class="form-group"><label>Cuello (cm)</label><input type="number" id="cf_cuello" placeholder="ej. 38" step="0.1"></div>
+                            <div class="form-group"><label>Piernas (cm)</label><input type="number" id="cf_piernas" placeholder="ej. 55" step="0.1"></div>
+                            <button type="submit" class="btn btn-primary">Guardar medidas iniciales</button>
+                        </form>
+                    </div>
+
+                    <!-- TAB: MEDIDAS FINALES -->
+                    <div id="challengeTabFinal" class="challenge-tab">
+                        <form id="challengeFormFinal">
+                            <div class="form-group"><label>Edad</label><input type="number" id="cff_edad" placeholder="años" min="1"></div>
+                            <div class="form-group"><label>Peso (kg)</label><input type="number" id="cff_peso" placeholder="ej. 70.0" step="0.1"></div>
+                            <div class="form-group"><label>Estatura (cm)</label><input type="number" id="cff_estatura" placeholder="ej. 175" step="0.1"></div>
+                            <div class="form-group"><label>Brazos (cm)</label><input type="number" id="cff_brazos" placeholder="ej. 37" step="0.1"></div>
+                            <div class="form-group"><label>Cintura (cm)</label><input type="number" id="cff_cintura" placeholder="ej. 75" step="0.1"></div>
+                            <div class="form-group"><label>Cuello (cm)</label><input type="number" id="cff_cuello" placeholder="ej. 37" step="0.1"></div>
+                            <div class="form-group"><label>Piernas (cm)</label><input type="number" id="cff_piernas" placeholder="ej. 57" step="0.1"></div>
+                            <button type="submit" class="btn btn-primary">Guardar medidas finales</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+        <!-- MODAL: INVITAR MIEMBRO -->
+        <div id="invitarMiembroModalOverlay" class="modal-overlay">
+            <div class="modal" style="max-width: 380px;">
+                <div class="modal-header">
+                    <h3>Agregar Miembro</h3>
+                    <button id="invitarMiembroCloseBtn" class="modal-close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">El miembro recibirá una contraseña temporal para entrar por primera vez.</p>
+                    <div class="form-group">
+                        <label for="invitarNombre">Nombre completo</label>
+                        <input type="text" id="invitarNombre" placeholder="Nombre completo del miembro">
+                    </div>
+                    <div class="form-group">
+                        <label for="invitarEmail">Email</label>
+                        <input type="email" id="invitarEmail" placeholder="correo@ejemplo.com">
+                    </div>
+                    <div id="invitarResult" style="margin-bottom:12px;display:none;"></div>
+                    <button id="invitarMiembroBtn" class="btn btn-primary" style="width:100%;">Agregar y generar contraseña</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: CAMBIAR CONTRASEÑA (primera vez) -->
+        <div id="cambiarPasswordModalOverlay" class="modal-overlay">
+            <div class="modal" style="max-width: 380px;">
+                <div class="modal-header">
+                    <h3>Bienvenido 👋</h3>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Es tu primera vez entrando. Por favor crea una contraseña nueva para tu cuenta.</p>
+                    <div class="form-group">
+                        <label for="nuevaPassword">Nueva contraseña</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="nuevaPassword" placeholder="Mínimo 6 caracteres">
+                            <button type="button" class="toggle-password-btn" data-target="nuevaPassword" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nuevaPasswordConfirm">Confirmar contraseña</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="nuevaPasswordConfirm" placeholder="Repite la contraseña">
+                            <button type="button" class="toggle-password-btn" data-target="nuevaPasswordConfirm" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                        </div>
+                    </div>
+                    <div id="cambiarPasswordError" style="color:var(--danger-color);font-size:13px;margin-bottom:12px;display:none;"></div>
+                    <button id="cambiarPasswordBtn" class="btn btn-primary" style="width:100%;">Guardar contraseña</button>
+                </div>
+            </div>
+        </div>
+    <script src="firebase-init.js"></script>
+    <script src="storage.js"></script>
+    <script src="game.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+</body>
+</html>
