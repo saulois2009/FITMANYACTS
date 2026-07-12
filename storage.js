@@ -101,8 +101,9 @@ async function registrarUsuario(datos) {
         if (datos.rol === 'usuario') {
             nuevoUsuario.membresia_vence = sumarMeses(obtenerFechaHoy(), 1);
         }
-        const ref = await addDoc(collection(getDB(), 'usuarios'), nuevoUsuario);
-        return { exito: true, usuario: { id: ref.id, ...nuevoUsuario } };
+        const ref = doc(getDB(), 'usuarios', uid);
+        await setDoc(ref, nuevoUsuario);
+        return { exito: true, usuario: { id: uid, ...nuevoUsuario } };
     } catch (err) {
         if (err.code === 'auth/email-already-in-use') {
             return { exito: false, error: 'Este email ya está registrado' };
@@ -124,31 +125,45 @@ async function obtenerMiembros() {
 }
 
 async function crearCoach(datos) {
-    if (!datos.nombre || !datos.email || !datos.contraseña) {
-        return { exito: false, error: 'Por favor complete todos los campos' };
-    }
-    if (datos.contraseña.length < 6) {
-        return { exito: false, error: 'La contraseña debe tener mínimo 6 caracteres' };
+    if (!datos.nombre || !datos.email) {
+        return { exito: false, error: 'Por favor completa nombre y email' };
     }
     const existente = await buscarUsuarioPorEmail(datos.email);
-    if (existente) return { exito: false, error: 'Este email ya está registrado' };
+    if (existente) return { exito: false, error: 'Este email ya esta registrado' };
 
-    const nuevoCoach = {
-        nombre: datos.nombre,
-        email: datos.email.toLowerCase(),
-        contraseña: datos.contraseña,
-        rol: 'entrenador',
-        estado: 'activo',
-        fecha_registro: obtenerFechaHoy()
-    };
-    const ref = await addDoc(collection(getDB(), 'usuarios'), nuevoCoach);
-    return { exito: true, usuario: { id: ref.id, ...nuevoCoach } };
+    const passwordTemporal = generarPasswordTemporal();
+
+    try {
+        const secondApp = firebase.apps.find(a => a.name === 'secondary')
+            || firebase.initializeApp(window._firebaseConfig, 'secondary');
+        const secondAuth = secondApp.auth();
+        const cred = await secondAuth.createUserWithEmailAndPassword(datos.email, passwordTemporal);
+        const uid = cred.user.uid;
+        await secondAuth.signOut();
+
+        const nuevoCoach = {
+            uid,
+            nombre: datos.nombre,
+            email: datos.email.toLowerCase(),
+            rol: 'entrenador',
+            estado: 'pendiente',
+            fecha_registro: obtenerFechaHoy()
+        };
+        const ref = doc(getDB(), 'usuarios', uid);
+        await setDoc(ref, nuevoCoach);
+        return { exito: true, passwordTemporal, usuario: { id: uid, ...nuevoCoach } };
+    } catch (err) {
+        if (err.code === 'auth/email-already-in-use') {
+            return { exito: false, error: 'Este email ya esta registrado' };
+        }
+        return { exito: false, error: err.message };
+    }
 }
 
 async function eliminarCoach(usuarioId) {
     const ref = doc(getDB(), 'usuarios', usuarioId);
     const snap = await getDoc(ref);
-    if (!snap.exists() || snap.data().rol !== 'entrenador') {
+    if (!snap.exists || snap.data().rol !== 'entrenador') {
         return { exito: false, error: 'Coach no encontrado' };
     }
     await deleteDoc(ref);
@@ -158,7 +173,7 @@ async function eliminarCoach(usuarioId) {
 async function eliminarMiembro(usuarioId) {
     const ref = doc(getDB(), 'usuarios', usuarioId);
     const snap = await getDoc(ref);
-    if (!snap.exists() || snap.data().rol !== 'usuario') {
+    if (!snap.exists || snap.data().rol !== 'usuario') {
         return { exito: false, error: 'Miembro no encontrado' };
     }
     await deleteDoc(ref);
@@ -172,7 +187,7 @@ async function eliminarMiembro(usuarioId) {
 async function activarMembresia(usuarioId) {
     const ref = doc(getDB(), 'usuarios', usuarioId);
     const snap = await getDoc(ref);
-    if (!snap.exists()) return { exito: false, error: 'Usuario no encontrado' };
+    if (!snap.exists) return { exito: false, error: 'Usuario no encontrado' };
     const usuario = snap.data();
     if (usuario.rol !== 'usuario') return { exito: false, error: 'Este usuario no tiene membresía' };
 
@@ -186,7 +201,7 @@ async function activarMembresia(usuarioId) {
 async function desactivarMembresia(usuarioId) {
     const ref = doc(getDB(), 'usuarios', usuarioId);
     const snap = await getDoc(ref);
-    if (!snap.exists()) return { exito: false, error: 'Usuario no encontrado' };
+    if (!snap.exists) return { exito: false, error: 'Usuario no encontrado' };
 
     const ayer = new Date();
     ayer.setDate(ayer.getDate() - 1);
@@ -212,18 +227,20 @@ async function invitarMiembro(nombre, email) {
     if (!nombre || !email) return { exito: false, error: 'Nombre y email son requeridos' };
     email = email.toLowerCase().trim();
 
-    // Verificar si ya existe en Firestore
     const existente = await buscarUsuarioPorEmail(email);
     if (existente) return { exito: false, error: 'Este email ya está registrado' };
 
     const passwordTemporal = generarPasswordTemporal();
 
     try {
-        // Crear en Firebase Auth con contraseña temporal
-        const cred = await window.authSDK.createUserWithEmailAndPassword(email, passwordTemporal);
+        // Usar segunda app de Firebase para no cerrar sesión del coach
+        const secondApp = firebase.apps.find(a => a.name === 'secondary') 
+            || firebase.initializeApp(window._firebaseConfig, 'secondary');
+        const secondAuth = secondApp.auth();
+        const cred = await secondAuth.createUserWithEmailAndPassword(email, passwordTemporal);
         const uid = cred.user.uid;
+        await secondAuth.signOut();
 
-        // Guardar en Firestore con estado "pendiente"
         const nuevoMiembro = {
             uid,
             nombre,
@@ -233,10 +250,7 @@ async function invitarMiembro(nombre, email) {
             fecha_registro: obtenerFechaHoy(),
             membresia_vence: sumarMeses(obtenerFechaHoy(), 1)
         };
-        await addDoc(collection(getDB(), 'usuarios'), nuevoMiembro);
-
-        // Cerrar sesión del nuevo usuario (para no cerrar sesión del coach)
-        await window.authSDK.signOut();
+        await setDoc(doc(getDB(), 'usuarios', uid), nuevoMiembro);
 
         return { exito: true, passwordTemporal, nombre };
     } catch (err) {
@@ -252,12 +266,10 @@ async function cambiarPasswordPrimeraVez(nuevaPassword) {
         const user = window.auth.currentUser;
         if (!user) return { exito: false, error: 'No hay sesión activa' };
         await user.updatePassword(nuevaPassword);
-
-        // Actualizar estado en Firestore de "pendiente" a "activo"
         const usuario = await buscarUsuarioPorEmail(user.email);
         if (usuario) {
-            const ref = window.firestoreSDK.doc(getDB(), 'usuarios', usuario.id);
-            await window.firestoreSDK.updateDoc(ref, { estado: 'activo' });
+            const ref = window.db.collection('usuarios').doc(usuario.id);
+            await ref.update({ estado: 'activo' });
         }
         return { exito: true };
     } catch (err) {
@@ -266,11 +278,140 @@ async function cambiarPasswordPrimeraVez(nuevaPassword) {
 }
 
 
+// ─── ESTADÍSTICAS PARA REPORTE ───────────────────────────────────────────────
+
+async function obtenerEstadisticas() {
+    const hoy = obtenerFechaHoy();
+    const [y, m] = hoy.split('-').map(Number);
+    const inicioMes = `${y}-${String(m).padStart(2,'0')}-01`;
+
+    // Fechas de la semana actual
+    const ahora = new Date();
+    const diasSemana = [];
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(ahora);
+        d.setDate(ahora.getDate() - ahora.getDay() + i);
+        diasSemana.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+    }
+
+    // Fecha en 7 días para membresías por vencer
+    const en7dias = new Date();
+    en7dias.setDate(en7dias.getDate() + 7);
+    const fecha7dias = `${en7dias.getFullYear()}-${String(en7dias.getMonth()+1).padStart(2,'0')}-${String(en7dias.getDate()).padStart(2,'0')}`;
+
+    // Todos los usuarios
+    const todosUsuarios = await obtenerTodosUsuarios();
+    const miembros = todosUsuarios.filter(u => u.rol === 'usuario');
+    const coaches = todosUsuarios.filter(u => u.rol === 'entrenador' && u.estado === 'activo');
+
+    const miembrosActivos = miembros.filter(u => u.estado === 'activo').length;
+    const miembrosInactivos = miembros.filter(u => u.estado === 'inactivo').length;
+    const miembrosPendientes = miembros.filter(u => u.estado === 'pendiente').length;
+    const miembrosNuevos = miembros.filter(u => u.fecha_registro >= inicioMes).length;
+
+    // Membresías por vencer en 7 días
+    const porVencer = miembros.filter(u => 
+        u.estado === 'activo' && u.membresia_vence && 
+        u.membresia_vence >= hoy && u.membresia_vence <= fecha7dias
+    );
+
+    // Reservas de la semana
+    const snapReservas = await getDocs(getDB().collection('reservas'));
+    const todasReservas = snapReservas.docs.map(d => ({ id: d.id, ...d.data() }));
+    const reservasSemana = todasReservas.filter(r => diasSemana.includes(r.fecha));
+
+    // Clase más popular
+    const conteoHoras = {};
+    reservasSemana.forEach(r => {
+        conteoHoras[r.hora] = (conteoHoras[r.hora] || 0) + 1;
+    });
+    const clasePopular = Object.entries(conteoHoras).sort((a, b) => b[1] - a[1])[0];
+
+    // Ocupación promedio (cupo máximo 20 por clase, 6 horarios por día, 5 días)
+    const clasesTotalesSemana = 6 * 5;
+    const ocupacionMax = clasesTotalesSemana * 20;
+    const ocupacionPct = ocupacionMax > 0 ? Math.round((reservasSemana.length / ocupacionMax) * 100) : 0;
+
+    // Reto 90 días
+    const snapReto = await getDocs(getDB().collection('reto90'));
+    const totalReto = snapReto.docs.length;
+
+    return {
+        miembrosActivos,
+        miembrosInactivos,
+        miembrosPendientes,
+        miembrosNuevos,
+        porVencer,
+        totalReservasSemana: reservasSemana.length,
+        ocupacionPct,
+        clasePopular: clasePopular ? `Clase mas popular: ${clasePopular[0]} hrs (${clasePopular[1]} reservas)` : 'Sin reservas esta semana',
+        totalCoaches: coaches.length,
+        totalReto
+    };
+}
+
+
+async function obtenerInscripcionesPorRango(rango) {
+    const todos = await obtenerTodosUsuarios();
+    const miembros = todos.filter(u => u.rol === 'usuario' && u.fecha_registro);
+
+    const hoy = new Date();
+    let labels = [];
+    let datos = [];
+
+    if (rango === 'semana') {
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(hoy);
+            d.setDate(hoy.getDate() - i);
+            const fecha = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            const dia = d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric' });
+            labels.push(dia);
+            datos.push(miembros.filter(m => m.fecha_registro === fecha).length);
+        }
+    } else if (rango === 'mes') {
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(hoy);
+            d.setDate(hoy.getDate() - i);
+            const fecha = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            const dia = d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+            labels.push(dia);
+            datos.push(miembros.filter(m => m.fecha_registro === fecha).length);
+        }
+    } else if (rango === 'anio') {
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+            const mes = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            const label = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+            labels.push(label);
+            datos.push(miembros.filter(m => m.fecha_registro && m.fecha_registro.startsWith(mes)).length);
+        }
+    } else { // todo
+        if (miembros.length === 0) return { labels: [], datos: [] };
+        const fechas = miembros.map(m => m.fecha_registro).sort();
+        const inicio = new Date(fechas[0]);
+        const meses = [];
+        const d = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+        while (d <= hoy) {
+            const mes = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            const label = d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+            meses.push({ mes, label });
+            d.setMonth(d.getMonth() + 1);
+        }
+        labels = meses.map(m => m.label);
+        datos = meses.map(m => miembros.filter(u => u.fecha_registro && u.fecha_registro.startsWith(m.mes)).length);
+    }
+
+    return { labels, datos };
+}
+
+
 const storage = {
     // Sesión
     guardarUsuarioActual,
     obtenerUsuarioActual,
     cerrarSesion,
+    obtenerEstadisticas,
+    obtenerInscripcionesPorRango,
     invitarMiembro,
     cambiarPasswordPrimeraVez,
     // Usuarios
@@ -345,6 +486,12 @@ async function contarReservas(fechaStr, horaStr) {
     );
     const snap = await getDocs(q);
     return snap.size;
+}
+
+async function obtenerReservasPorFecha(fecha) {
+    const q = query(collection(getDB(), 'reservas'), where('fecha', '==', fecha));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 async function cuposDisponibles(fechaStr, horaStr) {
@@ -449,6 +596,8 @@ Object.assign(storage, {
     puedeModificarReserva,
     esDiaHabil,
     contarReservas,
+    obtenerReservasPorFecha,
+    obtenerReservasPorFecha,
     cuposDisponibles,
     usuarioEstaAnotado,
     reservarClase,
@@ -475,7 +624,7 @@ async function obtenerEventosActivos() {
 
 async function obtenerEventoPorId(eventoId) {
     const snap = await getDoc(doc(getDB(), 'eventos', eventoId));
-    if (!snap.exists()) return null;
+    if (!snap.exists) return null;
     return { id: snap.id, ...snap.data() };
 }
 
@@ -497,7 +646,7 @@ async function crearEvento(datos) {
 async function editarEvento(eventoId, datos) {
     const ref = doc(getDB(), 'eventos', eventoId);
     const snap = await getDoc(ref);
-    if (!snap.exists()) return { exito: false, error: 'Evento no encontrado' };
+    if (!snap.exists) return { exito: false, error: 'Evento no encontrado' };
     await updateDoc(ref, {
         nombre: datos.nombre || '',
         fecha: datos.fecha || '',
@@ -510,10 +659,20 @@ async function editarEvento(eventoId, datos) {
     return { exito: true };
 }
 
+async function eliminarEvento(eventoId) {
+    try {
+        const ref = doc(getDB(), 'eventos', eventoId);
+        await deleteDoc(ref);
+        return { exito: true };
+    } catch (err) {
+        return { exito: false, error: err.message };
+    }
+}
+
 async function cambiarEstadoEvento(eventoId, activo) {
     const ref = doc(getDB(), 'eventos', eventoId);
     const snap = await getDoc(ref);
-    if (!snap.exists()) return { exito: false, error: 'Evento no encontrado' };
+    if (!snap.exists) return { exito: false, error: 'Evento no encontrado' };
     await updateDoc(ref, { activo });
     return { exito: true };
 }
@@ -619,6 +778,7 @@ Object.assign(storage, {
     crearEvento,
     editarEvento,
     cambiarEstadoEvento,
+    eliminarEvento,
     // Reto 90 días
     obtenerTodosParticipantesReto,
     obtenerParticipanteReto,

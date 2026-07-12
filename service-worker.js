@@ -1,6 +1,8 @@
-// service-worker.js - Service Worker para funcionamiento offline
+// service-worker.js - Estrategia: RED PRIMERO, caché solo como respaldo offline
+// Así, cada vez que haces deploy, los usuarios ven los cambios en el siguiente
+// refresh/apertura de la app sin tener que borrar caché manualmente.
 
-const CACHE_NAME = 'fitmanyacts-v3';
+const CACHE_NAME = 'v21'; // Puedes seguir subiendo este número si quieres forzar limpieza total
 const urlsToCache = [
     '/',
     '/index.html',
@@ -11,73 +13,46 @@ const urlsToCache = [
     '/manifest.json'
 ];
 
-// Instalación del Service Worker
+// Instalación: precachea el shell básico para que la app funcione offline
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => {
-                return cache.addAll(urlsToCache)
-                    .catch(err => {
-                        console.log('Error al cachear archivos:', err);
-                    });
-            })
+            .then(cache => cache.addAll(urlsToCache).catch(err => console.log('Error al cachear archivos:', err)))
     );
-    self.skipWaiting();
+    self.skipWaiting(); // Activa el SW nuevo de inmediato, sin esperar a que se cierren las pestañas viejas
 });
 
-// Activación del Service Worker
+// Activación: borra cachés antiguos y toma control de las pestañas abiertas ya mismo
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
+        caches.keys().then(cacheNames =>
+            Promise.all(
                 cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
+                    if (cacheName !== CACHE_NAME) return caches.delete(cacheName);
                 })
-            );
-        })
+            )
+        )
     );
     self.clients.claim();
 });
 
-// Estrategia de caché: primero caché, luego red
+// Fetch: RED PRIMERO. Si hay internet, siempre trae la versión más nueva del servidor
+// y de paso actualiza el caché. Si no hay internet, usa lo último que tenga guardado.
 self.addEventListener('fetch', event => {
-    // Solo cachear GET requests
-    if (event.request.method !== 'GET') {
-        return;
-    }
+    if (event.request.method !== 'GET') return;
 
     event.respondWith(
-        caches.match(event.request)
+        fetch(event.request)
             .then(response => {
-                // Retornar desde caché si existe
-                if (response) {
+                if (!response || response.status !== 200 || response.type === 'error') {
                     return response;
                 }
-
-                // Intentar obtener de la red
-                return fetch(event.request)
-                    .then(response => {
-                        // No cachear respuestas que no son válidas
-                        if (!response || response.status !== 200 || response.type === 'error') {
-                            return response;
-                        }
-
-                        // Clonar la respuesta
-                        const responseToCache = response.clone();
-
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return response;
-                    })
-                    .catch(() => {
-                        // Retornar página de caché como fallback si está disponible
-                        return caches.match('/index.html');
-                    });
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+                return response;
+            })
+            .catch(() => {
+                return caches.match(event.request).then(cached => cached || caches.match('/index.html'));
             })
     );
 });

@@ -10,14 +10,16 @@
     }
 
     function initFirebase() {
-        const app = firebase.initializeApp({
+        const firebaseConfig = {
             apiKey: "AIzaSyBFQ84x5uYLCqejKNrG4lPj6Az2mrgTb24",
             authDomain: "fit-manyacts.firebaseapp.com",
             projectId: "fit-manyacts",
             storageBucket: "fit-manyacts.firebasestorage.app",
             messagingSenderId: "453534938293",
             appId: "1:453534938293:web:922cdd392dbdcc571e3afc"
-        });
+        };
+        window._firebaseConfig = firebaseConfig;
+        const app = firebase.initializeApp(firebaseConfig);
 
         // Firestore
         window.db = firebase.firestore();

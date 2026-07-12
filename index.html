@@ -47,71 +47,72 @@
                     <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
                 </form>
                 
-                <p class="toggle-text">¿No tiene cuenta? <button type="button" id="toggleRegister" class="link-btn">Crear cuenta</button></p>
+
             </div>
         </div>
 
-        <!-- PANTALLA DE REGISTRO -->
-        <div id="registerScreen" class="screen">
-            <div class="register-container">
-                <h1>Crear Cuenta</h1>
-                <p class="subtitle">FITMANYACTS</p>
-                
-                <form id="registerForm" class="form">
-                    <div class="form-group">
-                        <label for="registerName">Nombre Completo</label>
-                        <input type="text" id="registerName" placeholder="Tu nombre" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="registerEmail">Email</label>
-                        <input type="email" id="registerEmail" placeholder="ejemplo@fitmanyacts.com" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="registerPassword">Contraseña</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
-                            <button type="button" class="toggle-password-btn" data-target="registerPassword" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                        </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="registerPasswordConfirm">Confirmar Contraseña</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="registerPasswordConfirm" placeholder="Repite la contraseña" required>
-                            <button type="button" class="toggle-password-btn" data-target="registerPasswordConfirm" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                        </div>
-                    </div>
-                    
-                    <input type="hidden" id="registerRole" value="usuario">
-                    
-                    <button type="submit" class="btn btn-primary">Crear Cuenta</button>
-                </form>
-                
-                <p class="toggle-text"><button type="button" id="toggleLogin" class="link-btn">Volver al login</button></p>
-            </div>
-        </div>
 
         <!-- PANTALLA PRINCIPAL (DASHBOARD) -->
         <div id="dashboardScreen" class="screen">
             <header class="header">
-                <img src="logo-fitmanyacts-horizontal.png" alt="FITMANYACTS" class="header-logo" style="height:44px;width:auto;max-width:200px;object-fit:contain;">
+                <img src="logo-fitmanyacts-horizontal.png" alt="FITMANYACTS" class="header-logo">
                 <button id="menuBtn" class="menu-btn">☰</button>
             </header>
 
             <div class="menu-overlay" id="menuOverlay">
-                <nav class="menu">
-                    <button class="menu-close" id="menuCloseBtn">✕</button>
-                    <a href="#" data-screen="profile" class="menu-item">Mi Perfil</a>
-                    <a href="#" data-screen="classes" class="menu-item">Clases</a>
-                    <a href="#" data-screen="events" class="menu-item">Eventos</a>
-                    <a href="#" data-screen="members" class="menu-item" id="membersMenuItem" style="display: none;">Miembros</a>
-                    <a href="#" data-screen="coaches" class="menu-item" id="coachesMenuItem" style="display: none;">Coaches</a>
-                    <a href="#" data-screen="challenge" class="menu-item" id="challengeMenuItem" style="display: none;">Reto 90 Días</a>
-                    <hr>
-                    <button id="logoutBtn" class="menu-item logout">Cerrar Sesión</button>
-                </nav>
+                <div class="menu">
+                    <div class="menu-header">
+                        <div class="menu-user-info">
+                            <div class="menu-user-name" id="menuUserName">-</div>
+                            <div class="menu-user-role" id="menuUserRole">-</div>
+                        </div>
+                        <button id="menuCloseBtn" class="menu-close">✕</button>
+                    </div>
+                    <nav class="menu-nav">
+                        <a href="#" data-screen="profile" class="menu-item" id="profileMenuItem">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            Mi Perfil
+                        </a>
+                        <a href="#" data-screen="classes" class="menu-item" id="classesMenuItem">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            Clases
+                        </a>
+                        <a href="#" data-screen="events" class="menu-item" id="eventsMenuItem">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            Eventos
+                        </a>
+                        <a href="#" data-screen="games" class="menu-item" id="gamesMenuItem">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01M7 12h.01M17 12h.01"/></svg>
+                            Mini Juegos
+                        </a>
+                        <a href="#" data-screen="members" class="menu-item" id="membersMenuItem" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="8" r="2"/><path d="M21 20c0-2.2-1.8-4-4-4"/></svg>
+                            Miembros
+                        </a>
+                        <a href="#" data-screen="coaches" class="menu-item" id="coachesMenuItem" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Coaches
+                        </a>
+                        <a href="#" data-screen="challenge" class="menu-item" id="challengeMenuItem" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+                            Reto 90 Días
+                        </a>
+                        <a href="#" data-screen="reporte" class="menu-item" id="reporteMenuItem" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                            Reporte
+                        </a>
+                    </nav>
+                    <div class="menu-footer">
+                        <button id="logoutBtn" class="menu-item logout" style="width:100%;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Cerrar Sesión
+                        </button>
+                        <p style="text-align:center;font-size:11px;color:#333;margin:12px 0 0;" id="versionLabel">v21
+
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <main class="content">
@@ -119,11 +120,95 @@
                 <section id="profileSection" class="section active">
                     <h2>Mi Perfil</h2>
                     <div class="card">
-                        <p><strong>Nombre:</strong> <span id="profileName">-</span></p>
-                        <p><strong>Email:</strong> <span id="profileEmail">-</span></p>
-                        <p><strong>Tipo:</strong> <span id="profileRole">-</span></p>
-                        <p id="profileAgeRow"><strong>Edad:</strong> <span id="profileAge">-</span></p>
-                        <p id="profileMembershipRow"><strong>Membresía:</strong> <span id="profileMembership">Vigente</span> <span id="profileMembershipVence" style="color: var(--text-light); font-size: 13px;"></span></p>
+                        <!-- Se llena dinámicamente por pintarPerfil() -->
+                    </div>
+
+                    <!-- Reto 90 días: solo visible si el miembro está inscrito -->
+                    <div class="card" id="retoMiembroCard" style="margin-top:16px;display:none;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                            <span style="font-size:20px;">🏆</span>
+                            <h3 style="margin:0;font-size:16px;color:var(--primary-color);">Tu Reto 90 Días</h3>
+                        </div>
+                        <div id="retoMiembroContenido"></div>
+                    </div>
+                </section>
+
+                <!-- SECCIÓN: REPORTE (solo dueño) -->
+                <section id="reporteSection" class="section">
+                    <h2>Reporte del Gimnasio</h2>
+
+                    <!-- Miembros -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <h3 style="margin-bottom:12px;font-size:15px;color:var(--primary-color);">Miembros</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div style="text-align:center;">
+                                <div id="statMiembrosActivos" style="font-size:32px;font-weight:700;color:var(--primary-color);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">Activos</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div id="statMiembrosInactivos" style="font-size:32px;font-weight:700;color:var(--danger-color);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">Inactivos</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div id="statMiembrosNuevos" style="font-size:32px;font-weight:700;color:var(--text-color);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">Nuevos este mes</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div id="statMiembrosPendientes" style="font-size:32px;font-weight:700;color:var(--text-light);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">Pendientes</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Membresias por vencer -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <h3 style="margin-bottom:12px;font-size:15px;color:var(--primary-color);">Membresias por vencer</h3>
+                        <div id="statMembresiasVencer" style="font-size:13px;color:var(--text-light);">Cargando...</div>
+                    </div>
+
+                    <!-- Asistencia -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <h3 style="margin-bottom:12px;font-size:15px;color:var(--primary-color);">Asistencia esta semana</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div style="text-align:center;">
+                                <div id="statTotalReservas" style="font-size:32px;font-weight:700;color:var(--primary-color);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">Total reservas</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div id="statOcupacion" style="font-size:32px;font-weight:700;color:var(--primary-color);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">Ocupacion promedio</div>
+                            </div>
+                        </div>
+                        <div id="statClasePopular" style="font-size:13px;color:var(--text-light);text-align:center;"></div>
+                    </div>
+
+                    <!-- Grafica de inscripciones -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <h3 style="margin:0;font-size:15px;color:var(--primary-color);">Inscripciones</h3>
+                            <div style="display:flex;gap:6px;">
+                                <button class="rango-btn active" data-rango="semana" style="padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--primary-color);background:var(--primary-color);color:#000;cursor:pointer;">Semana</button>
+                                <button class="rango-btn" data-rango="mes" style="padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-color);background:transparent;color:var(--text-light);cursor:pointer;">Mes</button>
+                                <button class="rango-btn" data-rango="anio" style="padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-color);background:transparent;color:var(--text-light);cursor:pointer;">Año</button>
+                                <button class="rango-btn" data-rango="todo" style="padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-color);background:transparent;color:var(--text-light);cursor:pointer;">Todo</button>
+                            </div>
+                        </div>
+                        <canvas id="graficaInscripciones" style="width:100%;max-height:220px;"></canvas>
+                    </div>
+
+                    <!-- Coaches y Reto -->
+                    <div class="card">
+                        <h3 style="margin-bottom:12px;font-size:15px;color:var(--primary-color);">General</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div style="text-align:center;">
+                                <div id="statCoaches" style="font-size:32px;font-weight:700;color:var(--primary-color);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">Coaches activos</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div id="statReto" style="font-size:32px;font-weight:700;color:var(--primary-color);">-</div>
+                                <div style="font-size:12px;color:var(--text-light);">En reto 90 dias</div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -162,10 +247,14 @@
                 <section id="challengeSection" class="section">
                     <h2>Reto 90 Días</h2>
 
-                    <!-- Botón de análisis IA -->
-                    <button id="analyzeBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 16px;">
-                        Analizar ganadores con IA
+                    <!-- Botón de análisis IA (solo dueño) -->
+                    <button id="analyzeBtn" class="btn btn-primary" style="width: 100%; margin-bottom: 16px; display:none;">
+                        Verificar ganadores
                     </button>
+                    <div id="proximamenteIA" style="display:none; text-align:center; padding: 12px; margin-bottom:16px; background:var(--card-bg); border-radius:8px; border: 1px solid var(--border-color);">
+                        <p style="color:var(--primary-color); font-weight:600; margin-bottom:4px;">Proxmamente</p>
+                        <p style="color:var(--text-light); font-size:13px; margin:0;">El analisis con IA tomara en cuenta sexo, edad, estatura y composicion corporal para determinar los ganadores con mayor precision.</p>
+                    </div>
 
                     <!-- Resultado del análisis -->
                     <div id="aiResultContainer" style="display: none;" class="card">
@@ -187,10 +276,8 @@
 
                 <!-- SECCIÓN: MIEMBROS (coaches y dueño) -->
                 <section id="membersSection" class="section">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <h2 style="margin:0;">Miembros</h2>
-                        <button id="agregarMiembroBtn" class="btn btn-primary" style="padding:8px 14px;font-size:13px;">+ Agregar</button>
-                    </div>
+                    <h2>Miembros</h2>
+                    <button id="agregarMiembroBtn" class="btn btn-primary" style="width:100%;margin-bottom:16px;">+ Agregar Miembro</button>
                     <input type="text" id="membersSearchInput" class="search-input" placeholder="Buscar miembro...">
                     <div id="membersList">
                         <!-- Se llena dinámicamente -->
@@ -370,6 +457,14 @@
                     <div id="challengeTabInicial" class="challenge-tab">
                         <form id="challengeFormInicial">
                             <input type="hidden" id="challengeFormType" value="inicial">
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="cf_sexo" style="width:100%;padding:12px;background:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:15px;">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="hombre">Hombre</option>
+                                    <option value="mujer">Mujer</option>
+                                </select>
+                            </div>
                             <div class="form-group"><label>Edad</label><input type="number" id="cf_edad" placeholder="años" min="1"></div>
                             <div class="form-group"><label>Peso (kg)</label><input type="number" id="cf_peso" placeholder="ej. 75.5" step="0.1"></div>
                             <div class="form-group"><label>Estatura (cm)</label><input type="number" id="cf_estatura" placeholder="ej. 175" step="0.1"></div>
@@ -384,6 +479,14 @@
                     <!-- TAB: MEDIDAS FINALES -->
                     <div id="challengeTabFinal" class="challenge-tab">
                         <form id="challengeFormFinal">
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="cff_sexo" style="width:100%;padding:12px;background:var(--bg-color);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:15px;">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="hombre">Hombre</option>
+                                    <option value="mujer">Mujer</option>
+                                </select>
+                            </div>
                             <div class="form-group"><label>Edad</label><input type="number" id="cff_edad" placeholder="años" min="1"></div>
                             <div class="form-group"><label>Peso (kg)</label><input type="number" id="cff_peso" placeholder="ej. 70.0" step="0.1"></div>
                             <div class="form-group"><label>Estatura (cm)</label><input type="number" id="cff_estatura" placeholder="ej. 175" step="0.1"></div>
@@ -408,7 +511,7 @@
                     <button id="invitarMiembroCloseBtn" class="modal-close-btn">✕</button>
                 </div>
                 <div class="modal-body">
-                    <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">El miembro recibirá una contraseña temporal para entrar por primera vez.</p>
+                    <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Crea la cuenta del miembro. Se generara una contrasena temporal que podras compartir por WhatsApp.</p>
                     <div class="form-group">
                         <label for="invitarNombre">Nombre completo</label>
                         <input type="text" id="invitarNombre" placeholder="Nombre completo del miembro">
@@ -417,39 +520,45 @@
                         <label for="invitarEmail">Email</label>
                         <input type="email" id="invitarEmail" placeholder="correo@ejemplo.com">
                     </div>
-                    <div id="invitarResult" style="margin-bottom:12px;display:none;"></div>
+                    <div id="invitarResult" style="margin-bottom:12px;display:none;font-size:13px;line-height:1.6;"></div>
                     <button id="invitarMiembroBtn" class="btn btn-primary" style="width:100%;">Agregar y generar contraseña</button>
                 </div>
             </div>
         </div>
 
-        <!-- MODAL: CAMBIAR CONTRASEÑA (primera vez) -->
+        <!-- MODAL: CAMBIAR CONTRASEÑA primera vez -->
         <div id="cambiarPasswordModalOverlay" class="modal-overlay">
             <div class="modal" style="max-width: 380px;">
                 <div class="modal-header">
-                    <h3>Bienvenido 👋</h3>
+                    <h3>Bienvenido</h3>
                 </div>
                 <div class="modal-body">
-                    <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Es tu primera vez entrando. Por favor crea una contraseña nueva para tu cuenta.</p>
+                    <p style="font-size:13px;color:var(--text-light);margin-bottom:16px;">Es tu primera vez entrando. Crea una contrasena nueva para tu cuenta.</p>
                     <div class="form-group">
-                        <label for="nuevaPassword">Nueva contraseña</label>
+                        <label for="nuevaPassword">Nueva contrasena</label>
                         <div class="password-wrapper">
-                            <input type="password" id="nuevaPassword" placeholder="Mínimo 6 caracteres">
-                            <button type="button" class="toggle-password-btn" data-target="nuevaPassword" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                            <input type="password" id="nuevaPassword" placeholder="Minimo 6 caracteres">
+                            <button type="button" class="toggle-password-btn" data-target="nuevaPassword" aria-label="Mostrar contrasena">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="nuevaPasswordConfirm">Confirmar contraseña</label>
+                        <label for="nuevaPasswordConfirm">Confirmar contrasena</label>
                         <div class="password-wrapper">
-                            <input type="password" id="nuevaPasswordConfirm" placeholder="Repite la contraseña">
-                            <button type="button" class="toggle-password-btn" data-target="nuevaPasswordConfirm" aria-label="Mostrar contraseña"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                            <input type="password" id="nuevaPasswordConfirm" placeholder="Repite la contrasena">
+                            <button type="button" class="toggle-password-btn" data-target="nuevaPasswordConfirm" aria-label="Mostrar contrasena">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
                         </div>
                     </div>
                     <div id="cambiarPasswordError" style="color:var(--danger-color);font-size:13px;margin-bottom:12px;display:none;"></div>
-                    <button id="cambiarPasswordBtn" class="btn btn-primary" style="width:100%;">Guardar contraseña</button>
+                    <button id="cambiarPasswordBtn" class="btn btn-primary" style="width:100%;">Guardar contrasena</button>
                 </div>
             </div>
         </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="firebase-init.js"></script>
     <script src="storage.js"></script>
     <script src="game.js"></script>
