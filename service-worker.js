@@ -2,7 +2,7 @@
 // Así, cada vez que haces deploy, los usuarios ven los cambios en el siguiente
 // refresh/apertura de la app sin tener que borrar caché manualmente.
 
-const CACHE_NAME = 'v22'; // Puedes seguir subiendo este número si quieres forzar limpieza total
+const CACHE_NAME = 'v23'; // Subir este número fuerza limpieza total del caché en todos los dispositivos
 const urlsToCache = [
     '/',
     '/index.html',
@@ -13,16 +13,14 @@ const urlsToCache = [
     '/manifest.json'
 ];
 
-// Instalación: precachea el shell básico para que la app funcione offline
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => cache.addAll(urlsToCache).catch(err => console.log('Error al cachear archivos:', err)))
     );
-    self.skipWaiting(); // Activa el SW nuevo de inmediato, sin esperar a que se cierren las pestañas viejas
+    self.skipWaiting();
 });
 
-// Activación: borra cachés antiguos y toma control de las pestañas abiertas ya mismo
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames =>
@@ -36,8 +34,6 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// Fetch: RED PRIMERO. Si hay internet, siempre trae la versión más nueva del servidor
-// y de paso actualiza el caché. Si no hay internet, usa lo último que tenga guardado.
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
