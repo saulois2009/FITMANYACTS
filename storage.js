@@ -304,9 +304,12 @@ async function obtenerEstadisticas() {
     const miembros = todosUsuarios.filter(u => u.rol === 'usuario');
     const coaches = todosUsuarios.filter(u => u.rol === 'entrenador' && u.estado === 'activo');
 
-    const miembrosActivos = miembros.filter(u => u.estado === 'activo').length;
-    const miembrosInactivos = miembros.filter(u => u.estado === 'inactivo').length;
+    // "Activo/Inactivo" se define por si la membresía está vigente (membresia_vence),
+    // no por el campo `estado` (que solo distingue 'pendiente' de todo lo demás y
+    // nunca tiene el valor 'inactivo' en ningún otro lugar del código).
     const miembrosPendientes = miembros.filter(u => u.estado === 'pendiente').length;
+    const miembrosActivos = miembros.filter(u => u.estado !== 'pendiente' && membresiaVigente(u)).length;
+    const miembrosInactivos = miembros.filter(u => u.estado !== 'pendiente' && !membresiaVigente(u)).length;
     const miembrosNuevos = miembros.filter(u => u.fecha_registro >= inicioMes).length;
 
     // Membresías por vencer en 7 días
