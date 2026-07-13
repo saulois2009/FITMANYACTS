@@ -75,12 +75,17 @@ async function buscarUsuarioPorEmail(email) {
 async function validarLogin(email, contraseña) {
     try {
         await window.authSDK.signInWithEmailAndPassword(email, contraseña);
-        const usuario = await buscarUsuarioPorEmail(email);
-        return usuario || null;
     } catch (err) {
-        console.warn('Login fallido:', err.code);
+        // Credenciales incorrectas (o usuario no existe en Firebase Auth)
+        console.warn('Login fallido (credenciales):', err.code);
         return null;
     }
+    // A partir de aquí la autenticación ya fue exitosa: si esto falla, NO es
+    // un problema de contraseña, es un problema de lectura en Firestore
+    // (permisos, conexión, etc.), así que dejamos que el error suba en vez
+    // de disfrazarlo como "contraseña incorrecta".
+    const usuario = await buscarUsuarioPorEmail(email);
+    return usuario || null;
 }
 
 async function registrarUsuario(datos) {

@@ -30,6 +30,7 @@ async function initializeApp() {
 
  // Usar Firebase Auth para saber si hay sesión activa
  window.authSDK.onAuthStateChanged(async (firebaseUser) => {
+ try {
  if (firebaseUser) {
  const usuario = await storage.buscarUsuarioPorEmail(firebaseUser.email);
  if (usuario) {
@@ -45,11 +46,17 @@ async function initializeApp() {
  await cargarDashboard(usuario);
  }
  } else {
+ console.warn('Sesión de Firebase Auth activa pero no existe el documento en Firestore para:', firebaseUser.email);
  mostrarPantalla('login');
  }
  } else {
  window._usuarioActual = null;
  mostrarPantalla('login');
+ }
+ } catch (err) {
+ console.error('Error al cargar la sesión:', err);
+ mostrarPantalla('login');
+ alert('No se pudo cargar tu perfil. Revisa tu conexión a internet e intenta de nuevo.');
  }
  });
 }
@@ -156,6 +163,7 @@ async function handleLogin() {
  const email = document.getElementById('loginEmail').value.trim();
  const password = document.getElementById('loginPassword').value;
  if (!email || !password) { alert('Por favor completa todos los campos'); return; }
+ try {
  const usuario = await storage.validarLogin(email, password);
  if (usuario) {
  window._usuarioActual = usuario;
@@ -163,6 +171,10 @@ async function handleLogin() {
  // onAuthStateChanged en initializeApp maneja la navegación automáticamente
  } else {
  alert('Email o contraseña incorrectos');
+ }
+ } catch (err) {
+ console.error('Login: la contraseña era correcta pero falló la carga del perfil:', err);
+ alert('Iniciaste sesión pero no pudimos cargar tu perfil. Revisa tu conexión e intenta de nuevo.');
  }
 }
 
