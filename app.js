@@ -28,6 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializeApp() {
  setupEventListeners();
 
+ // Además de limpiar al iniciar sesión, repetir cada 10 min mientras la app
+ // esté abierta: si alguien deja la app abierta todo el día, las reservas de
+ // clases que ya pasaron igual se van borrando sin necesidad de recargar.
+ setInterval(() => {
+ if (window._usuarioActual) storage.limpiarReservasPasadas().catch(() => {});
+ }, 10 * 60 * 1000);
+
  // Usar Firebase Auth para saber si hay sesión activa
  window.authSDK.onAuthStateChanged(async (firebaseUser) => {
  try {
@@ -476,18 +483,16 @@ async function cargarRetoPerfil(usuario) {
 
 // ─── CLASES ───────────────────────────────────────────────────────────────────
 
-function obtenerProximosDiasHabiles(n) {
+function obtenerProximosDias(n) {
  const dias = [];
  const nombres = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
  let cursor = new Date();
  while (dias.length < n) {
  const dia = cursor.getDay();
- if (dia >= 1 && dia <= 5) {
  const y = cursor.getFullYear();
  const m = String(cursor.getMonth()+1).padStart(2,'0');
  const d = String(cursor.getDate()).padStart(2,'0');
  dias.push({ fecha: `${y}-${m}-${d}`, etiqueta: `${nombres[dia]} ${d}/${m}` });
- }
  cursor = new Date(cursor.getTime() + 86400000);
  }
  return dias;
@@ -501,7 +506,7 @@ async function cargarClases() {
  const selectorContainer = document.getElementById('classesDaySelector');
  classesList.innerHTML = '<p class="empty-state">Cargando clases...</p>';
 
- const dias = obtenerProximosDiasHabiles(7);
+ const dias = obtenerProximosDias(7);
 
  if (selectorContainer) {
  selectorContainer.innerHTML = '';
@@ -515,6 +520,28 @@ async function cargarClases() {
  }
 
  const diaActual = dias[diaSeleccionadoClases];
+
+ // Fin de semana: no hay clases ese día, mostrar aviso y acceso directo al próximo día hábil
+ if (!storage.esDiaHabil(diaActual.fecha)) {
+ const indiceProximo = dias.findIndex((d, i) => i > diaSeleccionadoClases && storage.esDiaHabil(d.fecha));
+ const fragment = document.createDocumentFragment();
+ const aviso = document.createElement('div');
+ aviso.className = 'empty-state';
+ aviso.innerHTML = `Hoy no hay clases, pero puedes agendar para la próxima clase.`;
+ fragment.appendChild(aviso);
+ if (indiceProximo !== -1) {
+ const btnProximo = document.createElement('button');
+ btnProximo.className = 'btn btn-primary';
+ btnProximo.style.marginTop = '10px';
+ btnProximo.textContent = `Ver clases del ${dias[indiceProximo].etiqueta}`;
+ btnProximo.addEventListener('click', () => { diaSeleccionadoClases = indiceProximo; cargarClases(); });
+ fragment.appendChild(btnProximo);
+ }
+ classesList.innerHTML = '';
+ classesList.appendChild(fragment);
+ return;
+ }
+
  const horarios = storage.obtenerHorariosClases();
  const esCoachODueño = usuario.rol === 'entrenador' || usuario.rol === 'dueño';
 

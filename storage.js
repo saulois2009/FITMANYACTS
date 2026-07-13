@@ -590,7 +590,11 @@ async function obtenerListaAnotadosConId(fechaStr, horaStr) {
 }
 
 async function limpiarReservasPasadas() {
-    const snap = await getDocs(collection(getDB(), 'reservas'));
+    const hoy = obtenerFechaHoy();
+    // Solo traer reservas de hoy o de fechas anteriores (las futuras nunca "ya pasaron"),
+    // para no leer la colección completa cada vez que corre esta limpieza.
+    const q = query(collection(getDB(), 'reservas'), where('fecha', '<=', hoy));
+    const snap = await getDocs(q);
     for (const d of snap.docs) {
         const r = d.data();
         if (claseYaPaso(r.fecha, r.hora)) await deleteDoc(d.ref);
