@@ -270,6 +270,12 @@ async function revisarBannerEvento() {
  const modal = document.getElementById('eventoBannerModalOverlay');
  if (!modal) return;
 
+ // Solo para miembros: coaches y dueño no necesitan este recordatorio
+ if (!window._usuarioActual || window._usuarioActual.rol !== 'usuario') {
+ modal.classList.remove('active');
+ return;
+ }
+
  try {
  const eventos = await storage.obtenerEventosActivos();
  const hoy = new Date();
