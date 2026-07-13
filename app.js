@@ -267,8 +267,8 @@ async function cargarDashboard(usuario) {
 let eventoBannerActual = null;
 
 async function revisarBannerEvento() {
- const banner = document.getElementById('eventoBanner');
- if (!banner) return;
+ const modal = document.getElementById('eventoBannerModalOverlay');
+ if (!modal) return;
 
  try {
  const eventos = await storage.obtenerEventosActivos();
@@ -295,7 +295,7 @@ async function revisarBannerEvento() {
  });
 
  if (!candidato) {
- banner.style.display = 'none';
+ modal.classList.remove('active');
  eventoBannerActual = null;
  return;
  }
@@ -304,7 +304,7 @@ async function revisarBannerEvento() {
  const sub = candidatoDiff === 0 ? '¡Es hoy!' : candidatoDiff === 1 ? 'Es mañana' : `Faltan ${candidatoDiff} días`;
  document.getElementById('eventoBannerTitulo').textContent = candidato.nombre || 'Evento';
  document.getElementById('eventoBannerSubtitulo').textContent = `${candidato.fecha}${candidato.hora ? ' a las ' + candidato.hora : ''} · ${sub}`;
- banner.style.display = 'flex';
+ modal.classList.add('active');
 
  localStorage.setItem('evento_visto_' + candidato.id, 'true');
  } catch (err) {
@@ -314,11 +314,14 @@ async function revisarBannerEvento() {
 
 function setupBannerEventoListeners() {
  document.getElementById('eventoBannerCerrarBtn')?.addEventListener('click', () => {
- document.getElementById('eventoBanner').style.display = 'none';
+ document.getElementById('eventoBannerModalOverlay').classList.remove('active');
+ });
+ document.getElementById('eventoBannerModalOverlay')?.addEventListener('click', e => {
+ if (e.target.id === 'eventoBannerModalOverlay') e.target.classList.remove('active');
  });
  document.getElementById('eventoBannerSaberMasBtn')?.addEventListener('click', async () => {
  const evento = eventoBannerActual;
- document.getElementById('eventoBanner').style.display = 'none';
+ document.getElementById('eventoBannerModalOverlay').classList.remove('active');
  await cambiarSeccion('events');
  document.querySelectorAll('.menu-item[data-screen]').forEach(el => el.classList.remove('active'));
  document.getElementById('eventsMenuItem')?.classList.add('active');
@@ -939,6 +942,61 @@ async function cargarMiembros() {
  });
 }
 
+// ─── COMPARTIR CREDENCIALES (coach / miembro nuevo) ───────────────────────────
+
+function mostrarCompartirCredenciales({ nombre, email, passwordTemporal, tipoLabel }) {
+ const APP_URL = 'https://fit-manyacts.web.app';
+ const mensaje = `¡Bienvenido a FITMANYACTS! 💪\n\n` +
+ `Ya tienes acceso a la app como ${tipoLabel}.\n\n` +
+ `App: ${APP_URL}\n` +
+ `Correo: ${email}\n` +
+ `Contraseña temporal: ${passwordTemporal}\n\n` +
+ `Al iniciar sesión por primera vez te pedirá cambiarla.`;
+
+ document.getElementById('compartirCredencialesTitulo').textContent = `${tipoLabel === 'coach' ? 'Coach' : 'Miembro'} agregado`;
+ document.getElementById('compartirCredencialesEmail').textContent = email;
+ document.getElementById('compartirCredencialesPassword').textContent = passwordTemporal;
+
+ const overlay = document.getElementById('compartirCredencialesModalOverlay');
+ overlay.classList.add('active');
+
+ const shareBtn = document.getElementById('compartirCredencialesShareBtn');
+ shareBtn.style.display = (navigator.share) ? 'block' : 'none';
+ shareBtn.onclick = async () => {
+ try {
+ await navigator.share({ title: 'Acceso a FITMANYACTS', text: mensaje });
+ } catch (err) {
+ // El usuario cancelo el share o no fue soportado; no hacer nada
+ }
+ };
+
+ document.getElementById('compartirCredencialesWhatsappBtn').onclick = () => {
+ window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+ };
+
+ document.getElementById('compartirCredencialesGmailBtn').onclick = () => {
+ const asunto = encodeURIComponent('Tu acceso a FITMANYACTS');
+ const cuerpo = encodeURIComponent(mensaje);
+ window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${asunto}&body=${cuerpo}`, '_blank');
+ };
+
+ document.getElementById('compartirCredencialesCopiarBtn').onclick = async () => {
+ const btn = document.getElementById('compartirCredencialesCopiarBtn');
+ try {
+ await navigator.clipboard.writeText(mensaje);
+ const original = btn.textContent;
+ btn.textContent = '✔ Copiado';
+ setTimeout(() => { btn.textContent = original; }, 1500);
+ } catch (err) {
+ alert('No se pudo copiar. Copia el texto manualmente:\n\n' + mensaje);
+ }
+ };
+}
+
+document.getElementById('compartirCredencialesCloseBtn')?.addEventListener('click', () => {
+ document.getElementById('compartirCredencialesModalOverlay').classList.remove('active');
+});
+
 // ─── COACHES ──────────────────────────────────────────────────────────────────
 
 async function handleAddCoach() {
@@ -964,13 +1022,17 @@ async function handleAddCoach() {
  btn.textContent = 'Agregar Coach';
 
  if (r.exito) {
-     resultDiv.style.display = 'block';
-     resultDiv.style.color = 'var(--primary-color)';
-     resultDiv.innerHTML = `<strong>${r.usuario.nombre}</strong> agregado correctamente.<br>Contrasena temporal: <strong style="letter-spacing:2px;">${r.passwordTemporal}</strong><br><span style="font-size:12px;color:var(--text-light);">Compartela por WhatsApp. El coach la cambiara al entrar por primera vez.</span>`;
-     btn.style.display = 'none';
+     resultDiv.style.display = 'none';
+     btn.style.display = '';
      document.getElementById('coachName').value = '';
      document.getElementById('coachEmail').value = '';
      cargarCoaches();
+     mostrarCompartirCredenciales({
+         nombre: r.usuario.nombre,
+         email: r.usuario.email,
+         passwordTemporal: r.passwordTemporal,
+         tipoLabel: 'coach'
+     });
  } else {
      resultDiv.style.display = 'block';
      resultDiv.style.color = 'var(--danger-color)';
@@ -1286,10 +1348,17 @@ function setupInvitarMiembroListeners() {
  resultDiv.style.display = 'block';
 
  if (r.exito) {
- resultDiv.style.color = 'var(--primary-color)';
- resultDiv.innerHTML = `<strong>${r.nombre}</strong> agregado correctamente.<br>Contrasena temporal: <strong style="letter-spacing:2px;">${r.passwordTemporal}</strong><br><span style="font-size:12px;color:var(--text-light);">Compartela por WhatsApp. El miembro la cambiara al entrar por primera vez.</span>`;
- btn.style.display = 'none';
+ resultDiv.style.display = 'none';
+ btn.style.display = '';
+ document.getElementById('invitarNombre').value = '';
+ document.getElementById('invitarEmail').value = '';
  await cargarMiembros();
+ mostrarCompartirCredenciales({
+     nombre: r.nombre,
+     email: email,
+     passwordTemporal: r.passwordTemporal,
+     tipoLabel: 'miembro'
+ });
  } else {
  resultDiv.style.color = 'var(--danger-color)';
  resultDiv.textContent = r.error;
