@@ -2,7 +2,7 @@
 // Así, cada vez que haces deploy, los usuarios ven los cambios en el siguiente
 // refresh/apertura de la app sin tener que borrar caché manualmente.
 
-const CACHE_NAME = 'v21'; // Puedes seguir subiendo este número si quieres forzar limpieza total
+const CACHE_NAME = 'v22'; // Puedes seguir subiendo este número si quieres forzar limpieza total
 const urlsToCache = [
     '/',
     '/index.html',

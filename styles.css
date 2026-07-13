@@ -663,6 +663,71 @@ html, body {
     gap: 12px;
 }
 
+.evento-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background-color: var(--card-bg);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.evento-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.evento-banner-text strong {
+    color: var(--text-dark);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.evento-banner-text span {
+    color: var(--text-light);
+    font-size: 12px;
+}
+
+.evento-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.evento-banner-actions #eventoBannerSaberMasBtn {
+    background-color: var(--primary-color);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.evento-banner-close {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+
+.evento-banner-highlight {
+    box-shadow: 0 0 0 2px var(--primary-color);
+    transition: box-shadow 0.3s ease;
+}
+
 .event-item {
     background-color: var(--card-bg);
     padding: 20px;

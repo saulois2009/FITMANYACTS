@@ -637,6 +637,7 @@ async function crearEvento(datos) {
         costo_extra: datos.costo_extra !== undefined ? datos.costo_extra : 0,
         incluye_desayuno: datos.incluye_desayuno || false,
         link_maps: datos.link_maps || '',
+        campos_extra: Array.isArray(datos.campos_extra) ? datos.campos_extra : [],
         activo: true
     };
     const ref = await addDoc(collection(getDB(), 'eventos'), nuevoEvento);
@@ -654,7 +655,8 @@ async function editarEvento(eventoId, datos) {
         ubicacion: datos.ubicacion || '',
         costo_extra: datos.costo_extra !== undefined ? datos.costo_extra : 0,
         incluye_desayuno: datos.incluye_desayuno || false,
-        link_maps: datos.link_maps || ''
+        link_maps: datos.link_maps || '',
+        campos_extra: Array.isArray(datos.campos_extra) ? datos.campos_extra : []
     });
     return { exito: true };
 }

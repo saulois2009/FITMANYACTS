@@ -127,6 +127,7 @@ function setupEventListeners() {
  setupChallengeListeners();
  setupInvitarMiembroListeners();
  setupCambiarPasswordListeners();
+ setupBannerEventoListeners();
 
  const togglePasswordBtns = document.querySelectorAll('.toggle-password-btn');
  const ICONO_OJO = '<svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -147,7 +148,6 @@ function setupEventListeners() {
  });
  });
 
- setupEventModalListeners();
 }
 
 // ─── LOGIN / REGISTRO ─────────────────────────────────────────────────────────
@@ -259,6 +259,78 @@ async function cargarDashboard(usuario) {
  // const reporteMenuItem = document.getElementById('reporteMenuItem');
  // if (reporteMenuItem) reporteMenuItem.style.display = usuario.rol === 'dueño' ? 'block' : 'none';
  await cambiarSeccion('profile');
+ revisarBannerEvento();
+}
+
+// ─── BANNER DE EVENTO PRÓXIMO ──────────────────────────────────────────────────
+
+let eventoBannerActual = null;
+
+async function revisarBannerEvento() {
+ const banner = document.getElementById('eventoBanner');
+ if (!banner) return;
+
+ try {
+ const eventos = await storage.obtenerEventosActivos();
+ const hoy = new Date();
+ hoy.setHours(0, 0, 0, 0);
+
+ let candidato = null;
+ let candidatoDiff = Infinity;
+
+ eventos.forEach(evento => {
+ if (!evento.fecha) return;
+ const fechaEvento = new Date(evento.fecha + 'T00:00:00');
+ const diffDias = Math.round((fechaEvento - hoy) / 86400000);
+ if (diffDias < 0) return; // ya pasó, ignorar
+
+ const yaVisto = localStorage.getItem('evento_visto_' + evento.id) === 'true';
+ const esNuevo = !yaVisto;
+ const enVentanaRecordatorio = diffDias <= 3;
+
+ if ((esNuevo || enVentanaRecordatorio) && diffDias < candidatoDiff) {
+ candidato = evento;
+ candidatoDiff = diffDias;
+ }
+ });
+
+ if (!candidato) {
+ banner.style.display = 'none';
+ eventoBannerActual = null;
+ return;
+ }
+
+ eventoBannerActual = candidato;
+ const sub = candidatoDiff === 0 ? '¡Es hoy!' : candidatoDiff === 1 ? 'Es mañana' : `Faltan ${candidatoDiff} días`;
+ document.getElementById('eventoBannerTitulo').textContent = candidato.nombre || 'Evento';
+ document.getElementById('eventoBannerSubtitulo').textContent = `${candidato.fecha}${candidato.hora ? ' a las ' + candidato.hora : ''} · ${sub}`;
+ banner.style.display = 'flex';
+
+ localStorage.setItem('evento_visto_' + candidato.id, 'true');
+ } catch (err) {
+ // Si algo falla, simplemente no se muestra el banner (no es crítico)
+ }
+}
+
+function setupBannerEventoListeners() {
+ document.getElementById('eventoBannerCerrarBtn')?.addEventListener('click', () => {
+ document.getElementById('eventoBanner').style.display = 'none';
+ });
+ document.getElementById('eventoBannerSaberMasBtn')?.addEventListener('click', async () => {
+ const evento = eventoBannerActual;
+ document.getElementById('eventoBanner').style.display = 'none';
+ await cambiarSeccion('events');
+ document.querySelectorAll('.menu-item[data-screen]').forEach(el => el.classList.remove('active'));
+ document.getElementById('eventsMenuItem')?.classList.add('active');
+ if (evento) {
+ const el = document.getElementById('evento-' + evento.id);
+ if (el) {
+ el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+ el.classList.add('evento-banner-highlight');
+ setTimeout(() => el.classList.remove('evento-banner-highlight'), 2000);
+ }
+ }
+ });
 }
 
 async function cargarPerfil() {
@@ -598,15 +670,32 @@ async function cargarEventos() {
  eventos.forEach(evento => {
  const item = document.createElement('div');
  item.className = 'event-item';
+ item.id = 'evento-' + evento.id;
  if (esCoachODueño && !evento.activo) item.style.opacity = '0.55';
 
- item.innerHTML = `
- <div class="event-name">${evento.nombre}${esCoachODueño && !evento.activo ? ' <span style="color:var(--text-light);font-size:12px;">(Inactivo)</span>' : ''}</div>
- <div class="event-detail"> ${evento.fecha} a las ${evento.hora}</div>
- <div class="event-detail">📍 ${evento.ubicacion}</div>
- <div class="event-detail"> Costo adicional: $${evento.costo_extra}</div>
- <div class="event-detail">🍽️ ${evento.incluye_desayuno ? 'Incluye desayuno y bebida' : 'Sin desayuno'}</div>
- `;
+ let detallesHtml = `<div class="event-name">${evento.nombre || 'Evento'}${esCoachODueño && !evento.activo ? ' <span style="color:var(--text-light);font-size:12px;">(Inactivo)</span>' : ''}</div>`;
+
+ if (evento.fecha) {
+ detallesHtml += `<div class="event-detail"> ${evento.fecha}${evento.hora ? ' a las ' + evento.hora : ''}</div>`;
+ }
+ if (evento.ubicacion) {
+ detallesHtml += `<div class="event-detail">📍 ${evento.ubicacion}</div>`;
+ }
+ if (evento.costo_extra) {
+ detallesHtml += `<div class="event-detail"> Costo adicional: $${evento.costo_extra}</div>`;
+ }
+ if (evento.incluye_desayuno) {
+ detallesHtml += `<div class="event-detail">🍽️ Incluye desayuno y bebida</div>`;
+ }
+ if (Array.isArray(evento.campos_extra)) {
+ evento.campos_extra.forEach(campo => {
+ if (campo && campo.titulo && campo.valor) {
+ detallesHtml += `<div class="event-detail">${campo.titulo}: ${campo.valor}</div>`;
+ }
+ });
+ }
+
+ item.innerHTML = detallesHtml;
 
  if (evento.link_maps) {
  const a = document.createElement('a');
@@ -658,6 +747,32 @@ async function cargarEventos() {
  });
 }
 
+// ─── CAMPOS EXTRA DEL EVENTO (dinámicos) ───────────────────────────────────────
+
+function crearFilaCampoExtra(titulo = '', valor = '') {
+ const fila = document.createElement('div');
+ fila.className = 'extra-field-row';
+ fila.style.cssText = 'display:flex;gap:6px;align-items:center;';
+ fila.innerHTML = `
+ <input type="text" class="extra-field-titulo" placeholder="Título (ej. Requiere transporte)" value="${titulo.replace(/"/g, '&quot;')}" style="flex:1;">
+ <input type="text" class="extra-field-valor" placeholder="Valor (ej. Sí, salimos 7am)" value="${valor.replace(/"/g, '&quot;')}" style="flex:1;">
+ <button type="button" class="extra-field-remove" aria-label="Quitar campo" style="background:none;border:none;color:var(--danger-color);font-size:18px;cursor:pointer;padding:4px 8px;flex-shrink:0;">✕</button>
+ `;
+ fila.querySelector('.extra-field-remove').addEventListener('click', () => fila.remove());
+ document.getElementById('extraFieldsContainer').appendChild(fila);
+}
+
+function recolectarCamposExtra() {
+ const filas = document.querySelectorAll('#extraFieldsContainer .extra-field-row');
+ const campos = [];
+ filas.forEach(fila => {
+ const titulo = fila.querySelector('.extra-field-titulo').value.trim();
+ const valor = fila.querySelector('.extra-field-valor').value.trim();
+ if (titulo && valor) campos.push({ titulo, valor });
+ });
+ return campos;
+}
+
 // ─── MODAL EVENTO ─────────────────────────────────────────────────────────────
 
 const CAMPOS_EVENTO = [
@@ -671,6 +786,7 @@ const CAMPOS_EVENTO = [
 
 async function abrirModalEvento(eventoId) {
  document.getElementById('eventForm').reset();
+ document.getElementById('extraFieldsContainer').innerHTML = '';
  const title = document.getElementById('eventModalTitle');
  const editIdInput = document.getElementById('eventEditId');
  if (eventoId) {
@@ -685,6 +801,9 @@ async function abrirModalEvento(eventoId) {
  document.getElementById('eventCost').value = evento.costo_extra ?? '';
  document.getElementById('eventBreakfast').value = evento.incluye_desayuno ? 'si' : 'no';
  document.getElementById('eventMapsLink').value = evento.link_maps || '';
+ if (Array.isArray(evento.campos_extra)) {
+ evento.campos_extra.forEach(campo => crearFilaCampoExtra(campo.titulo, campo.valor));
+ }
  } else {
  title.textContent = 'Crear Evento';
  editIdInput.value = '';
@@ -703,7 +822,8 @@ function recolectarDatosEvento() {
  ubicacion: document.getElementById('eventLocation').value.trim(),
  costo_extra: document.getElementById('eventCost').value.trim(),
  incluye_desayuno: document.getElementById('eventBreakfast').value === 'si',
- link_maps: document.getElementById('eventMapsLink').value.trim()
+ link_maps: document.getElementById('eventMapsLink').value.trim(),
+ campos_extra: recolectarCamposExtra()
  };
 }
 
@@ -742,6 +862,7 @@ function setupEventModalListeners() {
  document.getElementById('eventForm')?.addEventListener('submit', e => { e.preventDefault(); handleEventFormSubmit(); });
  document.getElementById('eventModalCloseBtn')?.addEventListener('click', cerrarModalEvento);
  document.getElementById('eventModalOverlay')?.addEventListener('click', e => { if (e.target.id === 'eventModalOverlay') cerrarModalEvento(); });
+ document.getElementById('addExtraFieldBtn')?.addEventListener('click', () => crearFilaCampoExtra());
  document.getElementById('emptyFieldsContinueBtn')?.addEventListener('click', () => { const cb = onContinuarCamposVacios; cerrarConfirmacionCamposVacios(); if (cb) cb(); });
  document.getElementById('emptyFieldsEditBtn')?.addEventListener('click', cerrarConfirmacionCamposVacios);
  document.getElementById('emptyFieldsModalOverlay')?.addEventListener('click', e => { if (e.target.id === 'emptyFieldsModalOverlay') cerrarConfirmacionCamposVacios(); });
