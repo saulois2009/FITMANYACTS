@@ -208,6 +208,7 @@ async function cambiarSeccion(nombreSeccion) {
  members: async () => { document.getElementById('membersSection').classList.add('active'); await cargarMiembros(); },
  coaches: async () => { document.getElementById('coachesSection').classList.add('active'); await cargarCoaches(); },
  challenge: async () => { document.getElementById('challengeSection').classList.add('active'); await cargarReto(); },
+ myChallenge: async () => { document.getElementById('myChallengeSection').classList.add('active'); await cargarRetoPerfil(window._usuarioActual); },
  reporte: async () => { document.getElementById('reporteSection').classList.add('active'); await cargarReporte(); }
  };
  if (mapa[nombreSeccion]) await mapa[nombreSeccion]();
@@ -248,6 +249,8 @@ async function cargarDashboard(usuario) {
  if (membersMenuItem) membersMenuItem.style.display = (usuario.rol === 'entrenador' || usuario.rol === 'dueño') ? 'block' : 'none';
  const challengeMenuItem = document.getElementById('challengeMenuItem');
  if (challengeMenuItem) challengeMenuItem.style.display = (usuario.rol === 'entrenador' || usuario.rol === 'dueño') ? 'flex' : 'none';
+ const myChallengeMenuItem = document.getElementById('myChallengeMenuItem');
+ if (myChallengeMenuItem) myChallengeMenuItem.style.display = usuario.rol === 'usuario' ? 'flex' : 'none';
 
  // Mostrar nombre y rol en header del menú
  const menuUserName = document.getElementById('menuUserName');
@@ -346,7 +349,6 @@ async function cargarPerfil() {
  const usuario = window._usuarioActual;
  if (usuario) {
      pintarPerfil(usuario);
-     await cargarRetoPerfil(usuario);
  }
 }
 
@@ -357,15 +359,13 @@ let graficaRetoMiembro = null;
 async function cargarRetoPerfil(usuario) {
  const card = document.getElementById('retoMiembroCard');
  const contenido = document.getElementById('retoMiembroContenido');
- if (!card || !contenido) return;
-
- // Esta vista solo aplica a miembros (los coaches/dueño ya tienen su propia sección de Reto)
- if (usuario.rol !== 'usuario') { card.style.display = 'none'; return; }
+ if (!card || !contenido || !usuario) return;
 
  const participante = await storage.obtenerParticipanteReto(usuario.id);
- if (!participante) { card.style.display = 'none'; return; }
-
- card.style.display = 'block';
+ if (!participante) {
+     contenido.innerHTML = `<p class="empty-state">Aún no estás inscrito en el Reto 90 Días. Pregúntale a tu coach si quieres sumarte 💪</p>`;
+     return;
+ }
 
  const ini = participante.medidas_iniciales;
  const fin = participante.medidas_finales;
