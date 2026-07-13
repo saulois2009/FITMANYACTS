@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Migración de referencias FITMANYACTS</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        h1 { color: #c1fe40; }
+        p { color: #aaa; text-align: center; max-width: 500px; }
+        input { display: block; width: 260px; padding: 10px; margin: 6px 0; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #fff; }
+        button { background: #c1fe40; color: #000; border: none; padding: 16px 32px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 8px; }
+        button:disabled { background: #555; color: #999; cursor: not-allowed; }
+        #log { margin-top: 20px; font-size: 14px; max-width: 550px; width: 100%; }
+        #log p { text-align: left; margin: 4px 0; }
+        .ok  { color: #c1fe40; }
+        .err { color: #ff5252; }
+        .inf { color: #aaa; }
+    </style>
+</head>
+<body>
+    <h1>Migración de referencias</h1>
+    <p>Detecta y corrige automáticamente referencias rotas de <strong>usuarioId</strong> en <strong>reto90</strong> (comparando por nombre) y limpia reservas huérfanas.<br>
+    Es seguro correrla varias veces — se salta lo que ya esté bien.<br>
+    Úsala, revisa el resultado, y elimínala del proyecto cuando ya no la necesites.</p>
+
+    <div id="loginBox">
+        <input type="email" id="email" placeholder="Tu correo (dueño)">
+        <input type="password" id="password" placeholder="Tu contraseña">
+        <button id="btnLogin" onclick="login()">Iniciar sesión</button>
+    </div>
+
+    <button id="btnMigrar" onclick="migrar()" style="display:none;">Corregir referencias</button>
+    <div id="log"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFQ84x5uYLCqejKNrG4lPj6Az2mrgTb24",
+            authDomain: "fit-manyacts.firebaseapp.com",
+            projectId: "fit-manyacts",
+            storageBucket: "fit-manyacts.firebasestorage.app",
+            messagingSenderId: "453534938293",
+            appId: "1:453534938293:web:922cdd392dbdcc571e3afc"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const log = document.getElementById('log');
+        function logMsg(msg, tipo = 'inf') {
+            log.innerHTML += `<p class="${tipo}">${msg}</p>`;
+        }
+
+        function normalizar(txt) {
+            return (txt || '').trim().toLowerCase();
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btnLogin = document.getElementById('btnLogin');
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Entrando...';
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                logMsg(`✅ Sesión iniciada como ${email}`, 'ok');
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('btnMigrar').style.display = 'inline-block';
+            } catch (err) {
+                logMsg(`❌ Error de login: ${err.message}`, 'err');
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'Iniciar sesión';
+            }
+        }
+
+        window.migrar = async function () {
+            const btn = document.getElementById('btnMigrar');
+            btn.disabled = true;
+            btn.textContent = 'Corrigiendo...';
+
+            // 1. Traer todos los usuarios actuales (ID correcto = uid)
+            const usuariosSnap = await db.collection('usuarios').get();
+            const idsValidos = new Set();
+            const porNombre = {}; // nombre normalizado -> [ids] (puede haber más de uno con el mismo nombre)
+            usuariosSnap.forEach(doc => {
+                idsValidos.add(doc.id);
+                const nombre = normalizar(doc.data().nombre);
+                if (!nombre) return;
+                if (!porNombre[nombre]) porNombre[nombre] = [];
+                porNombre[nombre].push(doc.id);
+            });
+            logMsg(`📋 ${usuariosSnap.size} usuarios cargados como referencia.`);
+
+            // 2. RETO90: usa el campo 'nombre' guardado en cada participante para encontrar el ID correcto
+            const retoSnap = await db.collection('reto90').get();
+            let retoCorregidos = 0, retoOk = 0, retoSinResolver = 0;
+
+            for (const docSnap of retoSnap.docs) {
+                const data = docSnap.data();
+                if (idsValidos.has(data.usuarioId)) { retoOk++; continue; }
+
+                const candidatos = porNombre[normalizar(data.nombre)] || [];
+                if (candidatos.length === 1) {
+                    try {
+                        await db.collection('reto90').doc(docSnap.id).update({ usuarioId: candidatos[0] });
+                        logMsg(`✅ reto90/${docSnap.id} (${data.nombre}): ${data.usuarioId} → ${candidatos[0]}`, 'ok');
+                        retoCorregidos++;
+                    } catch (err) {
+                        logMsg(`❌ Error en reto90/${docSnap.id}: ${err.message}`, 'err');
+                    }
+                } else {
+                    logMsg(`⚠️ reto90/${docSnap.id} (${data.nombre}): no se pudo resolver automáticamente (${candidatos.length === 0 ? 'no se encontró ningún usuario con ese nombre' : 'hay ' + candidatos.length + ' usuarios con ese mismo nombre, revisión manual'}).`, 'inf');
+                    retoSinResolver++;
+                }
+            }
+            logMsg(`🏆 Reto 90 días: ${retoOk} ya estaban bien, ${retoCorregidos} corregidos, ${retoSinResolver} sin resolver automáticamente.`, retoSinResolver ? 'inf' : 'ok');
+
+            // 3. RESERVAS: no guardan nombre, así que solo se pueden limpiar las que quedaron huérfanas
+            //    (referencian un usuarioId que ya no existe). Se eliminan porque son datos transitorios
+            //    (reservas viejas o de prueba) y no afectan cupos de clases futuras.
+            const reservasSnap = await db.collection('reservas').get();
+            let reservasHuerfanas = 0;
+            for (const docSnap of reservasSnap.docs) {
+                const data = docSnap.data();
+                if (idsValidos.has(data.usuarioId)) continue;
+                try {
+                    await db.collection('reservas').doc(docSnap.id).delete();
+                    logMsg(`🗑️ reserva huérfana eliminada: ${docSnap.id} (${data.fecha} ${data.hora})`, 'inf');
+                    reservasHuerfanas++;
+                } catch (err) {
+                    logMsg(`❌ No se pudo limpiar reserva huérfana ${docSnap.id}: ${err.message}`, 'err');
+                }
+            }
+            logMsg(`📅 Reservas: ${reservasHuerfanas} huérfana(s) eliminada(s).`, 'ok');
+
+            logMsg('', 'inf');
+            logMsg('🎉 <strong>Listo. Revisa que no haya errores arriba y luego elimina este archivo del proyecto.</strong>', 'ok');
+            btn.textContent = 'Completado';
+        };
+    </script>
+</body>
+</html>
