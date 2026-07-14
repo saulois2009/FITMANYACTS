@@ -544,10 +544,10 @@ async function reservarClase(usuarioId, fechaStr, horaStr) {
         return { exito: false, error: 'Ya estás anotado en esta clase' };
     }
     if (await usuarioTieneReservaEseDia(usuarioId, fechaStr)) {
-        return { exito: false, error: 'Ya tienes una clase reservada ese día. Solo puedes anotarte a una clase por día.' };
+        return { exito: false, error: 'Ya tienes una clase reservada. Solo puedes anotarte a una clase por día.' };
     }
     if (await cuposDisponibles(fechaStr, horaStr) <= 0) {
-        return { exito: false, error: 'No hay cupos disponibles' };
+        return { exito: false, error: 'No hay cupo disponible' };
     }
     await addDoc(collection(getDB(), 'reservas'), {
         usuarioId, fecha: fechaStr, hora: horaStr,

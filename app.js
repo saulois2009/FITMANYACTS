@@ -571,7 +571,7 @@ async function cargarClases() {
  const totalAnotados = reservasHora.length;
 
  let infoHtml = `<div class="class-time">${horario.etiqueta}</div>
- <div class="class-status">Cupos disponibles: ${cupos} / 20</div>`;
+ <div class="class-status">Cupo disponible: ${cupos} / 20</div>`;
  if (yaPaso) infoHtml += `<div class="class-status">Esta clase ya pasó</div>`;
  else if (anotado) infoHtml += `<div class="class-status" style="color:var(--success-color);">Estás anotado</div>`;
  if (!puedeModificar && !yaPaso && anotado) infoHtml += `<div class="class-status">Ya no puedes cancelar (faltan menos de 15 min)</div>`;
@@ -674,7 +674,7 @@ async function renderRosterModal() {
  addList.innerHTML = '';
  const cupos = await storage.cuposDisponibles(fecha, hora);
  if (yaPaso) { addList.innerHTML = '<div class="roster-empty">Esta clase ya pasó</div>'; return; }
- if (cupos <= 0) { addList.innerHTML = '<div class="roster-empty">No hay cupos disponibles</div>'; return; }
+ if (cupos <= 0) { addList.innerHTML = '<div class="roster-empty">No hay cupo disponible</div>'; return; }
 
  const miembros = (await storage.obtenerMiembros()).filter(m => !anotados.some(a => a.usuarioId === m.id) && m.nombre.toLowerCase().includes(filtroAgendar));
  if (miembros.length === 0) { addList.innerHTML = '<div class="roster-empty">Sin resultados</div>'; return; }
