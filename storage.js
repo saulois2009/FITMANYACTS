@@ -517,6 +517,16 @@ async function usuarioEstaAnotado(usuarioId, fechaStr, horaStr) {
     return !snap.empty;
 }
 
+async function usuarioTieneReservaEseDia(usuarioId, fechaStr) {
+    const q = query(
+        collection(getDB(), 'reservas'),
+        where('usuarioId', '==', usuarioId),
+        where('fecha', '==', fechaStr)
+    );
+    const snap = await getDocs(q);
+    return !snap.empty;
+}
+
 async function reservarClase(usuarioId, fechaStr, horaStr) {
     if (claseYaPaso(fechaStr, horaStr)) {
         return { exito: false, error: 'Esta clase ya pasó' };
@@ -532,6 +542,9 @@ async function reservarClase(usuarioId, fechaStr, horaStr) {
     }
     if (await usuarioEstaAnotado(usuarioId, fechaStr, horaStr)) {
         return { exito: false, error: 'Ya estás anotado en esta clase' };
+    }
+    if (await usuarioTieneReservaEseDia(usuarioId, fechaStr)) {
+        return { exito: false, error: 'Ya tienes una clase reservada ese día. Solo puedes anotarte a una clase por día.' };
     }
     if (await cuposDisponibles(fechaStr, horaStr) <= 0) {
         return { exito: false, error: 'No hay cupos disponibles' };
@@ -562,6 +575,7 @@ async function desanotarClase(usuarioId, fechaStr, horaStr) {
 async function reservarClaseAdmin(usuarioId, fechaStr, horaStr) {
     if (claseYaPaso(fechaStr, horaStr)) return { exito: false, error: 'Esta clase ya pasó' };
     if (await usuarioEstaAnotado(usuarioId, fechaStr, horaStr)) return { exito: false, error: 'Este miembro ya está anotado' };
+    if (await usuarioTieneReservaEseDia(usuarioId, fechaStr)) return { exito: false, error: 'Este miembro ya tiene una clase reservada ese día' };
     if (await cuposDisponibles(fechaStr, horaStr) <= 0) return { exito: false, error: 'No hay cupos' };
     await addDoc(collection(getDB(), 'reservas'), {
         usuarioId, fecha: fechaStr, hora: horaStr,

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
  setTimeout(() => {
  splash.classList.add('fade-out');
  setTimeout(() => splash.remove(), 650);
- }, 2000);
+ }, 1967);
  }
 
  // Esperar a que firebase-init.js (type=module) termine antes de arrancar
