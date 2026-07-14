@@ -1,5 +1,75 @@
 // app.js - Lógica principal (Firestore async/await)
 
+// --- Instalación de la app (PWA) ---
+(function () {
+    const LS_KEY = 'installBannerCerrado';
+    let deferredPrompt = null;
+
+    function yaInstalada() {
+        return window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true; // iOS
+    }
+
+    function esIOS() {
+        return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    }
+
+    function mostrarBanner(modo) {
+        if (yaInstalada() || localStorage.getItem(LS_KEY) === '1') return;
+        const banner = document.getElementById('installBanner');
+        const btn = document.getElementById('installBannerBtn');
+        const subtext = document.getElementById('installBannerSubtext');
+        if (!banner) return;
+
+        if (modo === 'ios') {
+            subtext.textContent = 'Toca "Compartir" y luego "Agregar a inicio"';
+            btn.style.display = 'none';
+        } else {
+            subtext.textContent = 'Acceso rápido desde tu pantalla de inicio';
+            btn.style.display = '';
+        }
+        banner.classList.add('visible');
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        mostrarBanner('android');
+    });
+
+    window.addEventListener('appinstalled', () => {
+        const banner = document.getElementById('installBanner');
+        if (banner) banner.classList.remove('visible');
+        deferredPrompt = null;
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('installBannerBtn');
+        const closeBtn = document.getElementById('installBannerCloseBtn');
+
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('installBanner').classList.remove('visible');
+            });
+        }
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                document.getElementById('installBanner').classList.remove('visible');
+                localStorage.setItem(LS_KEY, '1');
+            });
+        }
+
+        // iOS no dispara beforeinstallprompt: mostramos instrucciones si aplica
+        if (esIOS() && !yaInstalada()) {
+            setTimeout(() => mostrarBanner('ios'), 2500);
+        }
+    });
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
  const splash = document.getElementById('splashScreen');
  if (splash) {
@@ -574,7 +644,7 @@ async function cargarClases() {
  <div class="class-status">Cupo disponible: ${cupos} / 20</div>`;
  if (yaPaso) infoHtml += `<div class="class-status">Esta clase ya pasó</div>`;
  else if (anotado) infoHtml += `<div class="class-status" style="color:var(--success-color);">Estás anotado</div>`;
- if (!puedeModificar && !yaPaso && anotado) infoHtml += `<div class="class-status">Ya no puede cancelar (faltan menos de 15 min)</div>`;
+ if (!puedeModificar && !yaPaso && anotado) infoHtml += `<div class="class-status">Ya no puedes cancelar (faltan menos de 15 min)</div>`;
 
  classItem.innerHTML = infoHtml;
 
@@ -600,7 +670,7 @@ async function cargarClases() {
  actionBtn.disabled = true;
  actionBtn.textContent = 'Cancelando...';
  const r = await storage.desanotarClase(usuario.id, diaActual.fecha, horario.hora);
- if (r.exito) cargarClases(); else { alert(r.error); actionBtn.disabled = false; actionBtn.textContent = 'Cancelar'; }
+ if (r.exito) cargarClases(); else { alert(r.error); actionBtn.disabled = false; actionBtn.textContent = 'Cancelar reserva'; }
  });
  } else {
  actionBtn.textContent = cupos > 0 ? 'Anotarme' : 'Sin cupo';
