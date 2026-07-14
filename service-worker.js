@@ -2,7 +2,7 @@
 // Así, cada vez que haces deploy, los usuarios ven los cambios en el siguiente
 // refresh/apertura de la app sin tener que borrar caché manualmente.
 
-const CACHE_NAME = 'v30'; // Subir este número fuerza limpieza total del caché en todos los dispositivos
+const CACHE_NAME = 'v31'; // Subir este número fuerza limpieza total del caché en todos los dispositivos
 const urlsToCache = [
     '/',
     '/index.html',

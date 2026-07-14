@@ -269,7 +269,14 @@ async function cargarDashboard(usuario) {
  const challengeMenuItem = document.getElementById('challengeMenuItem');
  if (challengeMenuItem) challengeMenuItem.style.display = (usuario.rol === 'entrenador' || usuario.rol === 'dueño') ? 'flex' : 'none';
  const myChallengeMenuItem = document.getElementById('myChallengeMenuItem');
- if (myChallengeMenuItem) myChallengeMenuItem.style.display = usuario.rol === 'usuario' ? 'flex' : 'none';
+ if (myChallengeMenuItem) {
+ if (usuario.rol === 'usuario') {
+ const participante = await storage.obtenerParticipanteReto(usuario.id);
+ myChallengeMenuItem.style.display = participante ? 'flex' : 'none';
+ } else {
+ myChallengeMenuItem.style.display = 'none';
+ }
+ }
 
  // Mostrar nombre y rol en header del menú
  const menuUserName = document.getElementById('menuUserName');
@@ -565,9 +572,9 @@ async function cargarClases() {
 
  let infoHtml = `<div class="class-time">${horario.etiqueta}</div>
  <div class="class-status">Cupos disponibles: ${cupos} / 20</div>`;
- if (yaPaso) infoHtml += `<div class="class-status">Esta clase ya paso</div>`;
- else if (anotado) infoHtml += `<div class="class-status" style="color:var(--success-color);">Estas anotado</div>`;
- if (!puedeModificar && !yaPaso && anotado) infoHtml += `<div class="class-status">Ya no puedes desanotarte (faltan menos de 15 min)</div>`;
+ if (yaPaso) infoHtml += `<div class="class-status">Esta clase ya pasó</div>`;
+ else if (anotado) infoHtml += `<div class="class-status" style="color:var(--success-color);">Estás anotado</div>`;
+ if (!puedeModificar && !yaPaso && anotado) infoHtml += `<div class="class-status">Ya no puedes cancelar (faltan menos de 15 min)</div>`;
 
  classItem.innerHTML = infoHtml;
 
@@ -585,7 +592,7 @@ async function cargarClases() {
  actionBtn.style.marginTop = '10px';
  actionBtn.style.width = '100%';
  if (anotado) {
- actionBtn.textContent = 'Desanotarme';
+ actionBtn.textContent = 'Cancelar reserva';
  actionBtn.style.backgroundColor = 'var(--danger-color)';
  actionBtn.disabled = !puedeModificar;
  actionBtn.addEventListener('click', async () => {

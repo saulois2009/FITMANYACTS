@@ -521,6 +521,15 @@ async function reservarClase(usuarioId, fechaStr, horaStr) {
     if (claseYaPaso(fechaStr, horaStr)) {
         return { exito: false, error: 'Esta clase ya pasó' };
     }
+    const usuarioRef = doc(getDB(), 'usuarios', usuarioId);
+    const usuarioSnap = await getDoc(usuarioRef);
+    if (!usuarioSnap.exists) {
+        return { exito: false, error: 'Usuario no encontrado' };
+    }
+    const usuario = { id: usuarioId, ...usuarioSnap.data() };
+    if (!membresiaVigente(usuario)) {
+        return { exito: false, error: 'Tu membresía está vencida. Renuévala para poder agendar clases.' };
+    }
     if (await usuarioEstaAnotado(usuarioId, fechaStr, horaStr)) {
         return { exito: false, error: 'Ya estás anotado en esta clase' };
     }
