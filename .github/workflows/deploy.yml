@@ -10,9 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Subir versión (cache-busting)
+        run: |
+          chmod +x bump-version.sh
+          ./bump-version.sh
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FIT_MANYACTS }}'
           channelId: live
           projectId: fit-manyacts
+          
