@@ -574,7 +574,7 @@ async function cargarClases() {
  <div class="class-status">Cupo disponible: ${cupos} / 20</div>`;
  if (yaPaso) infoHtml += `<div class="class-status">Esta clase ya pasó</div>`;
  else if (anotado) infoHtml += `<div class="class-status" style="color:var(--success-color);">Estás anotado</div>`;
- if (!puedeModificar && !yaPaso && anotado) infoHtml += `<div class="class-status">Ya no puedes cancelar (faltan menos de 15 min)</div>`;
+ if (!puedeModificar && !yaPaso && anotado) infoHtml += `<div class="class-status">Ya no puede cancelar (faltan menos de 15 min)</div>`;
 
  classItem.innerHTML = infoHtml;
 
@@ -600,7 +600,7 @@ async function cargarClases() {
  actionBtn.disabled = true;
  actionBtn.textContent = 'Cancelando...';
  const r = await storage.desanotarClase(usuario.id, diaActual.fecha, horario.hora);
- if (r.exito) cargarClases(); else { alert(r.error); actionBtn.disabled = false; actionBtn.textContent = 'Cancelar reserva'; }
+ if (r.exito) cargarClases(); else { alert(r.error); actionBtn.disabled = false; actionBtn.textContent = 'Cancelar'; }
  });
  } else {
  actionBtn.textContent = cupos > 0 ? 'Anotarme' : 'Sin cupo';
