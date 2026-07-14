@@ -58,12 +58,15 @@
         window.dispatchEvent(new Event('firebaseReady'));
     }
 
-    // Cargar SDKs compat en cadena
+    // Cargar SDKs compat: app primero, luego firestore y auth EN PARALELO
+    // (antes se cargaban uno tras otro, sumando un viaje de red extra sin necesidad)
     cargarScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', function () {
-        cargarScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js', function () {
-            cargarScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js', function () {
-                initFirebase();
-            });
-        });
+        let listos = 0;
+        function alListo() {
+            listos++;
+            if (listos === 2) initFirebase();
+        }
+        cargarScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js', alListo);
+        cargarScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js', alListo);
     });
 })();

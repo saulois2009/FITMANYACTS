@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
  setTimeout(() => {
  splash.classList.add('fade-out');
  setTimeout(() => splash.remove(), 650);
- }, 1967);
+ }, 2000);
  }
 
  // Esperar a que firebase-init.js (type=module) termine antes de arrancar
@@ -592,19 +592,25 @@ async function cargarClases() {
  actionBtn.style.marginTop = '10px';
  actionBtn.style.width = '100%';
  if (anotado) {
- actionBtn.textContent = 'Cancelar';
+ actionBtn.textContent = 'Cancelar reserva';
  actionBtn.style.backgroundColor = 'var(--danger-color)';
  actionBtn.disabled = !puedeModificar;
  actionBtn.addEventListener('click', async () => {
+ if (actionBtn.disabled) return;
+ actionBtn.disabled = true;
+ actionBtn.textContent = 'Cancelando...';
  const r = await storage.desanotarClase(usuario.id, diaActual.fecha, horario.hora);
- if (r.exito) cargarClases(); else alert(r.error);
+ if (r.exito) cargarClases(); else { alert(r.error); actionBtn.disabled = false; actionBtn.textContent = 'Cancelar reserva'; }
  });
  } else {
  actionBtn.textContent = cupos > 0 ? 'Anotarme' : 'Sin cupo';
  actionBtn.disabled = cupos <= 0;
  actionBtn.addEventListener('click', async () => {
+ if (actionBtn.disabled) return;
+ actionBtn.disabled = true;
+ actionBtn.textContent = 'Agendando...';
  const r = await storage.reservarClase(usuario.id, diaActual.fecha, horario.hora);
- if (r.exito) cargarClases(); else alert(r.error);
+ if (r.exito) cargarClases(); else { alert(r.error); actionBtn.disabled = false; actionBtn.textContent = 'Anotarme'; }
  });
  }
  classItem.appendChild(actionBtn);
@@ -661,8 +667,10 @@ async function renderRosterModal() {
  btn.className = 'roster-remove-btn';
  btn.textContent = '✕';
  btn.addEventListener('click', async () => {
+ if (btn.disabled) return;
+ btn.disabled = true;
  const r = await storage.desanotarClaseAdmin(a.usuarioId, fecha, hora);
- if (r.exito) { await renderRosterModal(); cargarClases(); } else alert(r.error);
+ if (r.exito) { await renderRosterModal(); cargarClases(); } else { alert(r.error); btn.disabled = false; }
  });
  row.appendChild(btn);
  }
@@ -686,8 +694,11 @@ async function renderRosterModal() {
  btn.className = 'roster-add-btn';
  btn.textContent = 'Agregar';
  btn.addEventListener('click', async () => {
+ if (btn.disabled) return;
+ btn.disabled = true;
+ btn.textContent = 'Agregando...';
  const r = await storage.reservarClaseAdmin(m.id, fecha, hora);
- if (r.exito) { await renderRosterModal(); cargarClases(); } else alert(r.error);
+ if (r.exito) { await renderRosterModal(); cargarClases(); } else { alert(r.error); btn.disabled = false; btn.textContent = 'Agregar'; }
  });
  row.appendChild(btn);
  addList.appendChild(row);
