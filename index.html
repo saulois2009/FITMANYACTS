@@ -112,7 +112,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                             Cerrar Sesión
                         </button>
-                        <p style="text-align:center;font-size:11px;color:#333;margin:12px 0 0;" id="versionLabel">v46
+                        <p style="text-align:center;font-size:11px;color:#333;margin:12px 0 0;" id="versionLabel">v47
 
                         </p>
                     </div>
@@ -606,6 +606,18 @@
             </div>
             <button id="installBannerBtn" class="btn btn-primary install-banner-btn">Instalar</button>
             <button id="installBannerCloseBtn" class="install-banner-close" aria-label="Cerrar">✕</button>
+        </div>
+
+        <!-- PANTALLA OBLIGATORIA DE INSTALACIÓN (solo Android) -->
+        <!-- No tiene botón de cerrar a propósito: en Android es obligatorio instalar para continuar. -->
+        <div id="installBlockOverlay" class="install-block-overlay">
+            <div class="install-block-content">
+                <img src="logo-portada.png" alt="FITMANYACTS" class="install-block-logo">
+                <h2 class="install-block-title">Instala la app para continuar</h2>
+                <p class="install-block-text" id="installBlockText">Para usar FITMANYACTS necesitas instalarla en tu celular. Solo toma un segundo.</p>
+                <button id="installBlockBtn" class="btn btn-primary install-block-btn">Instalar app</button>
+                <ol class="install-block-steps" id="installBlockSteps" style="display:none;"></ol>
+            </div>
         </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

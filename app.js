@@ -1,8 +1,17 @@
 // app.js - Lógica principal (Firestore async/await)
 
 // --- Instalación de la app (PWA) ---
+// iOS y escritorio: banner chico y descartable con instrucciones (igual que antes).
+// Android: pantalla completa OBLIGATORIA, sin botón de cerrar — no se puede usar la app
+// hasta instalarla.
+//   - Si el navegador ofrece el prompt nativo (beforeinstallprompt), se muestra un botón "Instalar app".
+//   - Si no lo ofrece (navegador in-app de Instagram/TikTok/Facebook, o Chrome ya lo rechazó
+//     antes y lo está deteniendo temporalmente), se muestran instrucciones manuales en su lugar.
+// Nota técnica: no es posible forzar el cierre de la pestaña ni la apertura automática de la
+// app instalada desde JavaScript — eso lo decide el navegador. En cuanto detectamos que la
+// instalación se completó ('appinstalled'), desbloqueamos la web como respaldo.
 (function () {
-    const LS_KEY = 'installBannerCerrado';
+    const LS_KEY = 'installBannerCerrado'; // solo aplica al banner chico (iOS/escritorio)
     let deferredPrompt = null;
 
     function yaInstalada() {
@@ -14,6 +23,19 @@
         return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
     }
 
+    function esAndroid() {
+        return /android/i.test(window.navigator.userAgent);
+    }
+
+    // Navegadores "in-app" (Instagram, Facebook, TikTok, Line, WeChat) no soportan
+    // instalar PWAs: ahí nunca se dispara beforeinstallprompt, así que vamos directo
+    // a instrucciones manuales sin esperar el timeout.
+    function esNavegadorInApp() {
+        return /FBAN|FBAV|Instagram|Line\//i.test(window.navigator.userAgent) ||
+               /MicroMessenger|TikTok/i.test(window.navigator.userAgent);
+    }
+
+    // ---- Banner chico (iOS y escritorio) ----
     function mostrarBanner(modo) {
         if (yaInstalada() || localStorage.getItem(LS_KEY) === '1') return;
         const banner = document.getElementById('installBanner');
@@ -31,22 +53,69 @@
         banner.classList.add('visible');
     }
 
+    // ---- Pantalla completa obligatoria (Android) ----
+    function mostrarBloqueoAndroid(modo) {
+        const overlay = document.getElementById('installBlockOverlay');
+        if (!overlay) return;
+        const textEl = document.getElementById('installBlockText');
+        const btn = document.getElementById('installBlockBtn');
+        const steps = document.getElementById('installBlockSteps');
+
+        if (modo === 'manual') {
+            textEl.textContent = 'Tu navegador no permite instalar la app automáticamente. Sigue estos pasos:';
+            btn.style.display = 'none';
+            steps.style.display = '';
+            steps.innerHTML =
+                '<li>Toca el menú ⋮ arriba a la derecha</li>' +
+                '<li>Elige "Agregar a pantalla de inicio" o "Instalar app"</li>' +
+                '<li>Confirma la instalación</li>' +
+                '<li>Abre FITMANYACTS desde el ícono nuevo en tu pantalla de inicio</li>';
+        } else if (modo === 'reintentar') {
+            textEl.textContent = 'Para continuar necesitas instalar la app.';
+            btn.textContent = 'Reintentar';
+            btn.style.display = '';
+            steps.style.display = 'none';
+        } else {
+            textEl.textContent = 'Para usar FITMANYACTS necesitas instalarla en tu celular. Solo toma un segundo.';
+            btn.textContent = 'Instalar app';
+            btn.style.display = '';
+            steps.style.display = 'none';
+        }
+
+        overlay.classList.add('visible');
+        document.body.classList.add('install-blocked');
+    }
+
+    function ocultarBloqueoAndroid() {
+        const overlay = document.getElementById('installBlockOverlay');
+        if (overlay) overlay.classList.remove('visible');
+        document.body.classList.remove('install-blocked');
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        mostrarBanner('android');
+        if (esAndroid()) {
+            mostrarBloqueoAndroid('prompt');
+        } else {
+            mostrarBanner('android'); // escritorio: banner chico, no bloqueante
+        }
     });
 
     window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
         const banner = document.getElementById('installBanner');
         if (banner) banner.classList.remove('visible');
-        deferredPrompt = null;
+        // Ya se cumplió el objetivo (la app quedó instalada). No podemos forzar el cierre
+        // de esta pestaña ni la apertura automática de la app desde JS, así que desbloqueamos
+        // la web como respaldo en vez de dejar a la persona atorada.
+        ocultarBloqueoAndroid();
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Banner chico (iOS / escritorio)
         const btn = document.getElementById('installBannerBtn');
         const closeBtn = document.getElementById('installBannerCloseBtn');
-
         if (btn) {
             btn.addEventListener('click', async () => {
                 if (!deferredPrompt) return;
@@ -63,9 +132,50 @@
             });
         }
 
-        // iOS no dispara beforeinstallprompt: mostramos instrucciones si aplica
+        // iOS no dispara beforeinstallprompt: mostramos instrucciones si aplica (banner chico, descartable)
         if (esIOS() && !yaInstalada()) {
             setTimeout(() => mostrarBanner('ios'), 2500);
+        }
+
+        // Bloqueo obligatorio de Android
+        const blockBtn = document.getElementById('installBlockBtn');
+        if (blockBtn) {
+            blockBtn.addEventListener('click', async () => {
+                if (blockBtn.textContent === 'Reintentar') {
+                    window.location.reload();
+                    return;
+                }
+                if (!deferredPrompt) return;
+                blockBtn.disabled = true;
+                deferredPrompt.prompt();
+                const choice = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                blockBtn.disabled = false;
+                if (choice.outcome === 'dismissed') {
+                    // El usuario canceló el prompt nativo. El mismo evento no se puede
+                    // reutilizar, así que la única salida es recargar (con suerte el
+                    // navegador vuelve a ofrecer el prompt en la siguiente carga).
+                    mostrarBloqueoAndroid('reintentar');
+                }
+                // Si acepta ('accepted'), el listener de 'appinstalled' de arriba desbloquea la web.
+            });
+        }
+
+        if (esAndroid() && !yaInstalada()) {
+            if (esNavegadorInApp()) {
+                // Navegador in-app: nunca dispara beforeinstallprompt, vamos directo a manual.
+                mostrarBloqueoAndroid('manual');
+            } else {
+                // Mostramos el bloqueo ya mismo con el botón (se actualiza solo si
+                // beforeinstallprompt llega después). Si en ~2.5s no llegó el evento
+                // (ya se rechazó antes, navegador sin soporte, etc.), cambiamos a manual.
+                mostrarBloqueoAndroid('prompt');
+                setTimeout(() => {
+                    if (!deferredPrompt && !yaInstalada()) {
+                        mostrarBloqueoAndroid('manual');
+                    }
+                }, 2500);
+            }
         }
     });
 })();
@@ -581,9 +691,13 @@ async function cargarClases() {
  const usuario = window._usuarioActual;
  const classesList = document.getElementById('classesList');
  const selectorContainer = document.getElementById('classesDaySelector');
- const scrollContainer = document.getElementById('dashboardScreen');
- const scrollY = scrollContainer ? scrollContainer.scrollTop : 0;
+ // Solo mostramos "Cargando..." si la lista está vacía (primera vez que se abre la sección).
+ // Si ya hay tarjetas de clases visibles, las dejamos ahí mientras se actualiza el contenido:
+ // borrar todo de golpe colapsa la altura de la página y hace que el navegador
+ // reajuste el scroll, dando la sensación de que "brinca" hasta arriba.
+ if (!classesList.children.length) {
  classesList.innerHTML = '<p class="empty-state">Cargando clases...</p>';
+ }
 
  const dias = obtenerProximosDias(7);
 
@@ -618,7 +732,6 @@ async function cargarClases() {
  }
  classesList.innerHTML = '';
  classesList.appendChild(fragment);
- if (scrollContainer) scrollContainer.scrollTop = scrollY;
  return;
  }
 
@@ -694,7 +807,6 @@ async function cargarClases() {
 
  classesList.innerHTML = '';
  classesList.appendChild(fragment);
- if (scrollContainer) scrollContainer.scrollTop = scrollY;
 }
 
 // ─── MODAL: LISTA DE ANOTADOS ─────────────────────────────────────────────────
