@@ -581,6 +581,8 @@ async function cargarClases() {
  const usuario = window._usuarioActual;
  const classesList = document.getElementById('classesList');
  const selectorContainer = document.getElementById('classesDaySelector');
+ const scrollContainer = document.getElementById('dashboardScreen');
+ const scrollY = scrollContainer ? scrollContainer.scrollTop : 0;
  classesList.innerHTML = '<p class="empty-state">Cargando clases...</p>';
 
  const dias = obtenerProximosDias(7);
@@ -616,6 +618,7 @@ async function cargarClases() {
  }
  classesList.innerHTML = '';
  classesList.appendChild(fragment);
+ if (scrollContainer) scrollContainer.scrollTop = scrollY;
  return;
  }
 
@@ -691,6 +694,7 @@ async function cargarClases() {
 
  classesList.innerHTML = '';
  classesList.appendChild(fragment);
+ if (scrollContainer) scrollContainer.scrollTop = scrollY;
 }
 
 // ─── MODAL: LISTA DE ANOTADOS ─────────────────────────────────────────────────
