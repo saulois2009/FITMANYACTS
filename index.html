@@ -112,7 +112,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                             Cerrar Sesión
                         </button>
-                        <p style="text-align:center;font-size:11px;color:#333;margin:12px 0 0;" id="versionLabel">v40
+                        <p style="text-align:center;font-size:11px;color:#333;margin:12px 0 0;" id="versionLabel">v41
 
                         </p>
                     </div>
@@ -292,6 +292,7 @@
                     <h2>Coaches</h2>
 
                     <div class="card">
+                        <div id="coachResult" style="margin-bottom:12px;display:none;font-size:13px;line-height:1.6;"></div>
                         <form id="addCoachForm" class="form" style="max-width: none; padding: 0; box-shadow: none;">
                             <div class="form-group">
                                 <label for="coachName">Nombre Completo</label>
@@ -303,7 +304,7 @@
                                 <input type="email" id="coachEmail" placeholder="coach@fitmanyacts.com" required>
                             </div>
 
-                            <button type="submit" class="btn btn-primary">Agregar Coach</button>
+                            <button type="submit" id="addCoachBtn" class="btn btn-primary">Agregar Coach</button>
                         </form>
                     </div>
 

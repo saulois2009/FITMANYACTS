@@ -662,7 +662,7 @@ async function cargarClases() {
  actionBtn.style.marginTop = '10px';
  actionBtn.style.width = '100%';
  if (anotado) {
- actionBtn.textContent = 'Cancelar reserva';
+ actionBtn.textContent = 'Cancelar';
  actionBtn.style.backgroundColor = 'var(--danger-color)';
  actionBtn.disabled = !puedeModificar;
  actionBtn.addEventListener('click', async () => {
