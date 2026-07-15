@@ -1,0 +1,12 @@
+{
+  "name": "fitmanyacts-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build tools para FITMANYACTS PWA (ofuscación de JS antes del deploy a Firebase Hosting)",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^4.2.2"
+  }
+}

@@ -14,10 +14,17 @@ jobs:
         run: |
           chmod +x bump-version.sh
           ./bump-version.sh
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar dependencias de build
+        run: npm ci
+      - name: Generar dist/ (JS ofuscado)
+        run: npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FIT_MANYACTS }}'
           channelId: live
           projectId: fit-manyacts
-          

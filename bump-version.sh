@@ -30,22 +30,22 @@ fi
 VERSION="v${VNUM}"
 
 if [ ! -f "$HTML_FILE" ]; then
-    echo "❌ No se encontró index.html en $DIR"
+    echo "No se encontró index.html en $DIR"
     exit 1
 fi
 
 echo ""
-echo "🚀 Subiendo versión a: $VERSION"
+echo "Subiendo versión a: $VERSION"
 echo ""
 
 # --- index.html: todos los ?v=ALGO ---
 sed -i.bak -E "s/\?v=[A-Za-z0-9._-]+/?v=${VNUM}/g" "$HTML_FILE"
 rm -f "$HTML_FILE.bak"
-echo "✅ index.html -> referencias ?v= actualizadas"
+echo "index.html -> referencias ?v= actualizadas"
 
 # Nota: el versionLabel visible en el menú NO se toca aquí a propósito,
 # para que puedas editarlo tú manualmente cuando quieras.
 
 echo ""
-echo "🎉 Listo. Ahora corre: firebase deploy"
+echo "Listo. Ahora corre: firebase deploy"
 echo ""
