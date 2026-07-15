@@ -696,6 +696,7 @@ async function cargarClases() {
 // ─── MODAL: LISTA DE ANOTADOS ─────────────────────────────────────────────────
 
 let modalClaseActual = null;
+let rosterCache = null; // { anotados, miembros } — se llena una vez al abrir el modal
 
 async function abrirModalClase(diaActual, horario, yaPaso) {
  modalClaseActual = { fecha: diaActual.fecha, etiquetaDia: diaActual.etiqueta, hora: horario.hora, etiquetaHora: horario.etiqueta, yaPaso };
@@ -703,24 +704,41 @@ async function abrirModalClase(diaActual, horario, yaPaso) {
  if (titleEl) titleEl.textContent = `${horario.etiqueta} · ${diaActual.etiqueta}`;
  document.getElementById('rosterSearchInput').value = '';
  document.getElementById('rosterAddSearchInput').value = '';
- await renderRosterModal();
+ await cargarRosterCache();
+ renderRosterModal();
  document.getElementById('rosterModalOverlay').classList.add('active');
 }
 
 function cerrarModalClase() {
  modalClaseActual = null;
+ rosterCache = null;
  document.getElementById('rosterModalOverlay').classList.remove('active');
 }
 
-async function renderRosterModal() {
+// Única función que toca Firestore: trae anotados + miembros en paralelo.
+// Se llama al abrir el modal y después de agendar/desanotar a alguien.
+async function cargarRosterCache() {
  if (!modalClaseActual) return;
- const { fecha, hora, yaPaso } = modalClaseActual;
+ const { fecha, hora } = modalClaseActual;
+ const [anotados, miembros] = await Promise.all([
+ storage.obtenerListaAnotadosConId(fecha, hora),
+ storage.obtenerMiembros()
+ ]);
+ rosterCache = { anotados, miembros };
+}
+
+// Ya NO es async ni consulta Firestore: solo filtra lo que ya está en memoria.
+// Por eso ahora sí es seguro llamarla en cada tecla del buscador.
+function renderRosterModal() {
+ if (!modalClaseActual || !rosterCache) return;
+ const { yaPaso, fecha, hora } = modalClaseActual;
+ const { anotados, miembros } = rosterCache;
+
  const rosterList = document.getElementById('rosterList');
  const rosterCount = document.getElementById('rosterCount');
  const filtroAnotados = document.getElementById('rosterSearchInput').value.trim().toLowerCase();
  const filtroAgendar = document.getElementById('rosterAddSearchInput').value.trim().toLowerCase();
 
- const anotados = await storage.obtenerListaAnotadosConId(fecha, hora);
  if (rosterCount) rosterCount.textContent = anotados.length;
 
  rosterList.innerHTML = '';
@@ -740,7 +758,14 @@ async function renderRosterModal() {
  if (btn.disabled) return;
  btn.disabled = true;
  const r = await storage.desanotarClaseAdmin(a.usuarioId, fecha, hora);
- if (r.exito) { await renderRosterModal(); cargarClases(); } else { alert(r.error); btn.disabled = false; }
+ if (r.exito) {
+ await cargarRosterCache();
+ renderRosterModal();
+ cargarClases();
+ } else {
+ alert(r.error);
+ btn.disabled = false;
+ }
  });
  row.appendChild(btn);
  }
@@ -750,13 +775,13 @@ async function renderRosterModal() {
 
  const addList = document.getElementById('rosterAddList');
  addList.innerHTML = '';
- const cupos = await storage.cuposDisponibles(fecha, hora);
+ const cupos = 20 - anotados.length;
  if (yaPaso) { addList.innerHTML = '<div class="roster-empty">Esta clase ya pasó</div>'; return; }
  if (cupos <= 0) { addList.innerHTML = '<div class="roster-empty">No hay cupo disponible</div>'; return; }
 
- const miembros = (await storage.obtenerMiembros()).filter(m => !anotados.some(a => a.usuarioId === m.id) && m.nombre.toLowerCase().includes(filtroAgendar));
- if (miembros.length === 0) { addList.innerHTML = '<div class="roster-empty">Sin resultados</div>'; return; }
- miembros.forEach(m => {
+ const disponibles = miembros.filter(m => !anotados.some(a => a.usuarioId === m.id) && m.nombre.toLowerCase().includes(filtroAgendar));
+ if (disponibles.length === 0) { addList.innerHTML = '<div class="roster-empty">Sin resultados</div>'; return; }
+ disponibles.forEach(m => {
  const row = document.createElement('div');
  row.className = 'roster-row';
  row.innerHTML = `<span>${m.nombre}</span>`;
@@ -768,7 +793,15 @@ async function renderRosterModal() {
  btn.disabled = true;
  btn.textContent = 'Agregando...';
  const r = await storage.reservarClaseAdmin(m.id, fecha, hora);
- if (r.exito) { await renderRosterModal(); cargarClases(); } else { alert(r.error); btn.disabled = false; btn.textContent = 'Agregar'; }
+ if (r.exito) {
+ await cargarRosterCache();
+ renderRosterModal();
+ cargarClases();
+ } else {
+ alert(r.error);
+ btn.disabled = false;
+ btn.textContent = 'Agregar';
+ }
  });
  row.appendChild(btn);
  addList.appendChild(row);
@@ -780,6 +813,7 @@ function setupRosterModalListeners() {
  const closeBtn = document.getElementById('rosterModalCloseBtn');
  if (closeBtn) closeBtn.addEventListener('click', cerrarModalClase);
  if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) cerrarModalClase(); });
+ // Ya no tocan Firestore: solo vuelven a pintar con lo que ya está en memoria.
  document.getElementById('rosterSearchInput')?.addEventListener('input', renderRosterModal);
  document.getElementById('rosterAddSearchInput')?.addEventListener('input', renderRosterModal);
 }

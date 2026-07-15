@@ -335,8 +335,8 @@ async function obtenerEstadisticas() {
     });
     const clasePopular = Object.entries(conteoHoras).sort((a, b) => b[1] - a[1])[0];
 
-    // Ocupación promedio (cupo máximo 20 por clase, 6 horarios por día, 5 días)
-    const clasesTotalesSemana = 6 * 5;
+    // Ocupación promedio (cupo máximo 20 por clase, HORARIOS_CLASES.length horarios por día, 5 días)
+    const clasesTotalesSemana = HORARIOS_CLASES.length * 5;
     const ocupacionMax = clasesTotalesSemana * 20;
     const ocupacionPct = ocupacionMax > 0 ? Math.round((reservasSemana.length / ocupacionMax) * 100) : 0;
 
@@ -531,8 +531,14 @@ async function reservarClase(usuarioId, fechaStr, horaStr) {
     if (claseYaPaso(fechaStr, horaStr)) {
         return { exito: false, error: 'Esta clase ya pasó' };
     }
-    const usuarioRef = doc(getDB(), 'usuarios', usuarioId);
-    const usuarioSnap = await getDoc(usuarioRef);
+
+    // Antes: hasta 4 lecturas encadenadas a Firestore (usuario, anotado, reserva del día, cupos).
+    // Ahora: 2 lecturas en paralelo; las 3 validaciones de reservas se resuelven en memoria.
+    const [usuarioSnap, reservasDia] = await Promise.all([
+        getDoc(doc(getDB(), 'usuarios', usuarioId)),
+        obtenerReservasPorFecha(fechaStr)
+    ]);
+
     if (!usuarioSnap.exists) {
         return { exito: false, error: 'Usuario no encontrado' };
     }
@@ -540,15 +546,16 @@ async function reservarClase(usuarioId, fechaStr, horaStr) {
     if (!membresiaVigente(usuario)) {
         return { exito: false, error: 'Tu membresía está vencida. Renuévala para poder agendar clases.' };
     }
-    if (await usuarioEstaAnotado(usuarioId, fechaStr, horaStr)) {
+    if (reservasDia.some(r => r.usuarioId === usuarioId && r.hora === horaStr)) {
         return { exito: false, error: 'Ya estás anotado en esta clase' };
     }
-    if (await usuarioTieneReservaEseDia(usuarioId, fechaStr)) {
+    if (reservasDia.some(r => r.usuarioId === usuarioId)) {
         return { exito: false, error: 'Ya tienes una clase reservada. Solo puedes anotarte a una clase por día.' };
     }
-    if (await cuposDisponibles(fechaStr, horaStr) <= 0) {
+    if (CUPO_MAXIMO - reservasDia.filter(r => r.hora === horaStr).length <= 0) {
         return { exito: false, error: 'No hay cupo disponible' };
     }
+
     await addDoc(collection(getDB(), 'reservas'), {
         usuarioId, fecha: fechaStr, hora: horaStr,
         fecha_reserva: obtenerFechaHoy()
@@ -574,9 +581,20 @@ async function desanotarClase(usuarioId, fechaStr, horaStr) {
 
 async function reservarClaseAdmin(usuarioId, fechaStr, horaStr) {
     if (claseYaPaso(fechaStr, horaStr)) return { exito: false, error: 'Esta clase ya pasó' };
-    if (await usuarioEstaAnotado(usuarioId, fechaStr, horaStr)) return { exito: false, error: 'Este miembro ya está anotado' };
-    if (await usuarioTieneReservaEseDia(usuarioId, fechaStr)) return { exito: false, error: 'Este miembro ya tiene una clase reservada ese día' };
-    if (await cuposDisponibles(fechaStr, horaStr) <= 0) return { exito: false, error: 'No hay cupos' };
+
+    // Antes: 3 lecturas encadenadas a Firestore. Ahora: 1 sola, con las validaciones en memoria.
+    const reservasDia = await obtenerReservasPorFecha(fechaStr);
+
+    if (reservasDia.some(r => r.usuarioId === usuarioId && r.hora === horaStr)) {
+        return { exito: false, error: 'Este miembro ya está anotado' };
+    }
+    if (reservasDia.some(r => r.usuarioId === usuarioId)) {
+        return { exito: false, error: 'Este miembro ya tiene una clase reservada ese día' };
+    }
+    if (CUPO_MAXIMO - reservasDia.filter(r => r.hora === horaStr).length <= 0) {
+        return { exito: false, error: 'No hay cupos' };
+    }
+
     await addDoc(collection(getDB(), 'reservas'), {
         usuarioId, fecha: fechaStr, hora: horaStr,
         fecha_reserva: obtenerFechaHoy(), agendado_por_staff: true
