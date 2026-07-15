@@ -54,14 +54,20 @@
     }
 
     // ---- Pantalla completa obligatoria (Android) ----
+    let blockBtnModo = 'prompt'; // 'prompt' | 'reintentar' | 'exito' (controla qué hace el click del botón)
+
     function mostrarBloqueoAndroid(modo) {
         const overlay = document.getElementById('installBlockOverlay');
         if (!overlay) return;
+        const titleEl = overlay.querySelector('.install-block-title');
         const textEl = document.getElementById('installBlockText');
         const btn = document.getElementById('installBlockBtn');
         const steps = document.getElementById('installBlockSteps');
 
+        blockBtnModo = modo;
+
         if (modo === 'manual') {
+            titleEl.textContent = 'Instala la app para continuar';
             textEl.textContent = 'Tu navegador no permite instalar la app automáticamente. Sigue estos pasos:';
             btn.style.display = 'none';
             steps.style.display = '';
@@ -71,11 +77,19 @@
                 '<li>Confirma la instalación</li>' +
                 '<li>Abre FITMANYACTS desde el ícono nuevo en tu pantalla de inicio</li>';
         } else if (modo === 'reintentar') {
+            titleEl.textContent = 'Instala la app para continuar';
             textEl.textContent = 'Para continuar necesitas instalar la app.';
             btn.textContent = 'Reintentar';
             btn.style.display = '';
             steps.style.display = 'none';
+        } else if (modo === 'exito') {
+            titleEl.textContent = '¡App instalada!';
+            textEl.textContent = 'Cierra esta pestaña del navegador y abre FITMANYACTS desde el ícono nuevo en tu pantalla de inicio.';
+            btn.textContent = 'Entendido, continuar aquí por ahora';
+            btn.style.display = '';
+            steps.style.display = 'none';
         } else {
+            titleEl.textContent = 'Instala la app para continuar';
             textEl.textContent = 'Para usar FITMANYACTS necesitas instalarla en tu celular. Solo toma un segundo.';
             btn.textContent = 'Instalar app';
             btn.style.display = '';
@@ -106,10 +120,17 @@
         deferredPrompt = null;
         const banner = document.getElementById('installBanner');
         if (banner) banner.classList.remove('visible');
-        // Ya se cumplió el objetivo (la app quedó instalada). No podemos forzar el cierre
-        // de esta pestaña ni la apertura automática de la app desde JS, así que desbloqueamos
-        // la web como respaldo en vez de dejar a la persona atorada.
-        ocultarBloqueoAndroid();
+
+        // Intento best-effort: casi nunca funciona en una pestaña que el usuario abrió
+        // normalmente (los navegadores solo dejan que un script cierre pestañas que él
+        // mismo abrió con window.open), pero no cuesta nada intentarlo.
+        try { window.close(); } catch (e) { /* ignorar */ }
+
+        // Si seguimos aquí (lo más probable), mostramos instrucciones claras en vez
+        // de desbloquear la web en silencio sin explicar qué pasó.
+        if (esAndroid()) {
+            mostrarBloqueoAndroid('exito');
+        }
     });
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -141,8 +162,14 @@
         const blockBtn = document.getElementById('installBlockBtn');
         if (blockBtn) {
             blockBtn.addEventListener('click', async () => {
-                if (blockBtn.textContent === 'Reintentar') {
+                if (blockBtnModo === 'reintentar') {
                     window.location.reload();
+                    return;
+                }
+                if (blockBtnModo === 'exito') {
+                    // Ya está instalada; no podemos forzar el cierre de la pestaña,
+                    // así que la dejamos usar la web mientras tanto.
+                    ocultarBloqueoAndroid();
                     return;
                 }
                 if (!deferredPrompt) return;
@@ -157,7 +184,7 @@
                     // navegador vuelve a ofrecer el prompt en la siguiente carga).
                     mostrarBloqueoAndroid('reintentar');
                 }
-                // Si acepta ('accepted'), el listener de 'appinstalled' de arriba desbloquea la web.
+                // Si acepta ('accepted'), el listener de 'appinstalled' de arriba muestra el éxito.
             });
         }
 
